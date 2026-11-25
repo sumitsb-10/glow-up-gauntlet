@@ -1,0 +1,232 @@
+/* Glow-Up Gauntlet — core: DOM helper, router, timers, audio, receipt */
+(function () {
+  'use strict';
+
+  var GG = (window.GG = window.GG || {});
+
+  GG.state = { vibe: null, results: [] };
+  GG.SCENES = {};
+  GG.current = null;
+
+  var timers = new Set();
+  var rafs = new Set();
+  var busy = false;
+
+  /* ---------- DOM ---------- */
+  GG.el = function (tag, attrs) {
+    var e = document.createElement(tag);
+    if (attrs) {
+      Object.keys(attrs).forEach(function (k) {
+        var v = attrs[k];
+        if (v == null) return;
+        if (k === 'class') e.className = v;
+        else if (k === 'text') e.textContent = v;
+        else if (k === 'html') e.innerHTML = v;
+        else if (k.slice(0, 2) === 'on' && typeof v === 'function') {
+          e.addEventListener(k.slice(2).toLowerCase(), v);
+        } else e.setAttribute(k, v);
+      });
+    }
+    for (var i = 2; i < arguments.length; i++) {
+      var kid = arguments[i];
+      if (kid == null) continue;
+      if (Array.isArray(kid)) {
+        kid.forEach(function (k) {
+          if (k != null) e.append(k.nodeType ? k : document.createTextNode(String(k)));
+        });
+      } else e.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+    return e;
+  };
+
+  GG.svg = function (markup, cls) {
+    var d = document.createElement('div');
+    d.className = cls || 'art';
+    d.innerHTML = markup;
+    return d;
+  };
+
+  /* ---------- timers + frames ---------- */
+  GG.timers = {
+    after: function (ms, fn) {
+      var id = setTimeout(function () { timers.delete(id); fn(); }, ms);
+      timers.add(id);
+      return id;
+    },
+    every: function (ms, fn) {
+      var id = setInterval(fn, ms);
+      timers.add(id);
+      return id;
+    },
+    cancel: function (id) { clearTimeout(id); clearInterval(id); timers.delete(id); },
+    clear: function () {
+      timers.forEach(function (id) { clearTimeout(id); clearInterval(id); });
+      timers.clear();
+    }
+  };
+
+  GG.raf = function (fn) {
+    var id = requestAnimationFrame(function (t) { rafs.delete(id); fn(t); });
+    rafs.add(id);
+    return id;
+  };
+  GG.rafClear = function () {
+    rafs.forEach(function (id) { cancelAnimationFrame(id); });
+    rafs.clear();
+  };
+
+  GG.on = function (el, ev, fn) {
+    el.addEventListener(ev, fn);
+    return function () { el.removeEventListener(ev, fn); };
+  };
+
+  /* ---------- stage ---------- */
+  GG.stage = {
+    fit: function () {
+      var s = Math.min(window.innerWidth / 1280, window.innerHeight / 800);
+      s = Math.max(0.4, Math.min(2.2, s));
+      document.documentElement.style.setProperty('--s', String(s));
+    }
+  };
+
+  /* ---------- router ---------- */
+  GG.register = function (name, scene) { GG.SCENES[name] = scene; };
+  GG.reset = function () { GG.state.vibe = null; GG.state.results.length = 0; };
+
+  GG.go = function (name, opts) {
+    if (busy) return false;
+    var scene = GG.SCENES[name];
+    if (!scene) { console.warn('[GG] no scene registered:', name); return false; }
+    busy = true;
+
+    var root = document.getElementById('scene');
+    var outgoing = GG.current;
+
+    function swap() {
+      if (outgoing && GG.SCENES[outgoing] && GG.SCENES[outgoing].unmount) {
+        try { GG.SCENES[outgoing].unmount(); } catch (e) { console.error('[GG] unmount', outgoing, e); }
+      }
+      GG.timers.clear();
+      GG.rafClear();
+      root.innerHTML = '';
+      root.classList.remove('in');
+      GG.current = name;
+      document.documentElement.dataset.scene = name;
+      try { scene.mount(root, opts || {}); } catch (e) { console.error('[GG] mount', name, e); }
+      requestAnimationFrame(function () { root.classList.add('in'); });
+      setTimeout(function () { busy = false; }, 240);
+    }
+
+    if (!outgoing) { swap(); return true; }
+    root.classList.remove('in');
+    setTimeout(swap, 170);
+    return true;
+  };
+
+  /* ---------- audio (silent until unlocked; muted by default) ---------- */
+  GG.audio = (function () {
+    var ctx = null;
+    var muted = true;
+    try { if (localStorage.getItem('gg.muted') === '0') muted = false; } catch (e) {}
+
+    function ensure() {
+      if (!ctx) {
+        try {
+          var AC = window.AudioContext || window.webkitAudioContext;
+          if (!AC) return null;
+          ctx = new AC();
+        } catch (e) { ctx = null; }
+      }
+      if (ctx && ctx.state === 'suspended') ctx.resume().catch(function () {});
+      return ctx;
+    }
+
+    function tone(freq, dur, type, vol, slideTo) {
+      if (muted) return;
+      var c = ensure();
+      if (!c) return;
+      try {
+        var o = c.createOscillator();
+        var g = c.createGain();
+        o.type = type || 'sine';
+        o.frequency.setValueAtTime(freq, c.currentTime);
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, c.currentTime + dur);
+        g.gain.setValueAtTime(0.0001, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(vol || 0.07, c.currentTime + 0.012);
+        g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+        o.connect(g);
+        g.connect(c.destination);
+        o.start();
+        o.stop(c.currentTime + dur + 0.03);
+      } catch (e) { /* silent */ }
+    }
+
+    function noise(dur, vol, from, to) {
+      if (muted) return;
+      var c = ensure();
+      if (!c) return;
+      try {
+        var len = Math.max(1, Math.floor(c.sampleRate * dur));
+        var buf = c.createBuffer(1, len, c.sampleRate);
+        var data = buf.getChannelData(0);
+        for (var i = 0; i < len; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / len);
+        var src = c.createBufferSource();
+        src.buffer = buf;
+        var f = c.createBiquadFilter();
+        f.type = 'bandpass';
+        f.frequency.setValueAtTime(from || 400, c.currentTime);
+        f.frequency.exponentialRampToValueAtTime(to || 1800, c.currentTime + dur);
+        var g = c.createGain();
+        g.gain.setValueAtTime(vol || 0.06, c.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+        src.connect(f); f.connect(g); g.connect(c.destination);
+        src.start();
+      } catch (e) { /* silent */ }
+    }
+
+    return {
+      unlock: function () { ensure(); },
+      isMuted: function () { return muted; },
+      toggle: function () {
+        muted = !muted;
+        try { localStorage.setItem('gg.muted', muted ? '1' : '0'); } catch (e) {}
+        if (!muted) { ensure(); tone(660, 0.09, 'sine', 0.05); }
+        return muted;
+      },
+      tap: function () { tone(540, 0.05, 'sine', 0.04); },
+      pop: function () { tone(880, 0.08, 'triangle', 0.05); },
+      whoosh: function () { noise(0.28, 0.05, 500, 2400); },
+      thud: function () { tone(120, 0.16, 'sine', 0.09, 62); },
+      chime: function () {
+        tone(660, 0.14, 'sine', 0.05);
+        setTimeout(function () { tone(990, 0.22, 'sine', 0.045); }, 90);
+      },
+      fan: function () { noise(0.5, 0.045, 220, 320); }
+    };
+  })();
+
+  /* ---------- receipt ---------- */
+  GG.receipt = function (root, data) {
+    var card = GG.el('div', { class: 'receipt-card' });
+    card.append(GG.el('div', { class: 'receipt-stamp', text: 'AI PC RECEIPT · NO CLOUD INVOLVED' }));
+
+    var lines = GG.el('div', { class: 'receipt-lines' });
+    (data.lines || []).forEach(function (line) {
+      lines.append(GG.el('div', { class: 'receipt-line' },
+        GG.el('span', { class: 'tick', text: '✓' }), line));
+    });
+    card.append(lines);
+    card.append(GG.el('h2', { class: 'receipt-headline', text: data.headline }));
+    if (data.body) card.append(GG.el('p', { class: 'receipt-body', text: data.body }));
+
+    var btn = GG.el('button', { class: 'btn', type: 'button', text: data.nextLabel || 'Next' });
+    btn.addEventListener('click', function () {
+      GG.audio.pop();
+      if (typeof data.next === 'function') data.next();
+    });
+    card.append(GG.el('div', { class: 'receipt-actions' }, btn));
+
+    root.append(GG.el('section', { class: 'receipt-scene' }, card));
+    GG.audio.chime();
+  };
+})();
