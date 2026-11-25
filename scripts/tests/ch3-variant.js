@@ -1,0 +1,11 @@
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const q = (s) => document.querySelector(s);
+await wait(400);
+const chip = (t) => Array.from(document.querySelectorAll('.vibe-chip')).find((c) => c.textContent.includes(t));
+chip('Y2K').click();
+await wait(250);
+chip('SERIF').click();
+await wait(250);
+chip('GRAINY').click();
+await wait(600);
+return { ok: true };
