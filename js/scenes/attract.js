@@ -52,10 +52,11 @@
         if (started) return;
         started = true;
         GG.audio.pop();
-        GG.go('intro');
+        GG.nav('intro');
       }
 
       GG.on(screen, 'pointerdown', start);
+      GG.on(screen, 'click', start);
       GG.on(play, 'keydown', function (e) {
         if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); start(); }
       });

@@ -123,6 +123,14 @@
     return true;
   };
 
+  /* navigate with retry: a tap during the router's fade window must not be lost */
+  GG.nav = function (name, tries) {
+    var n = tries == null ? 15 : tries;
+    if (GG.go(name)) return true;
+    if (n > 0) setTimeout(function () { GG.nav(name, n - 1); }, 100);
+    return false;
+  };
+
   /* ---------- audio (silent until unlocked; muted by default) ---------- */
   GG.audio = (function () {
     var ctx = null;

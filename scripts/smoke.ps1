@@ -17,6 +17,10 @@ if ($Scene) { $url += "?scene=$Scene" }
 $tmp = Join-Path $env:TEMP "gg-dom-$([guid]::NewGuid().ToString('N')).txt"
 $profile = Join-Path $env:TEMP "gg-edge-profile"
 
+# Edge writes harmless noise to stderr; don't let it abort the script.
+$prevEA = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
+
 & $edge --headless=new --disable-gpu --no-first-run --window-size=1280,800 `
   --user-data-dir="$profile" --virtual-time-budget=$Budget --dump-dom $url 2>$null |
   Out-File -FilePath $tmp -Encoding utf8

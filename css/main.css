@@ -116,7 +116,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 }
 .btn:hover { filter: brightness(1.06); }
 .btn:active { transform: scale(0.965); }
-.btn:disabled { opacity: 0.32; cursor: not-allowed; filter: none; }
+.btn:disabled { opacity: .32; cursor: not-allowed; filter: grayscale(1); }
 .btn:focus-visible { outline: 4px solid var(--blue-hi); outline-offset: 4px; }
 
 .btn.ghost {

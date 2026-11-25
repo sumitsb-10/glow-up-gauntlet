@@ -42,7 +42,7 @@
           GG.state.vibe = key;
           GG.audio.pop();
           card.classList.add('picked');
-          GG.timers.after(180, function () { GG.go('ch1'); });
+          GG.timers.after(180, function () { GG.nav('ch1'); });
         });
         grid.append(card);
       });
