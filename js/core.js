@@ -97,6 +97,16 @@
     if (busy) return false;
     var scene = GG.SCENES[name];
     if (!scene) { console.warn('[GG] no scene registered:', name); return false; }
+
+    var action = opts && opts.action;
+    if (action) {
+      var expected = GG.machine && GG.machine.nextScene ? GG.machine.nextScene(GG.current, action) : null;
+      if (expected !== name) {
+        console.warn('[GG] blocked transition:', GG.current, action, '->', name);
+        return false;
+      }
+    }
+
     busy = true;
 
     var root = document.getElementById('scene');
@@ -113,7 +123,7 @@
       GG.current = name;
       document.documentElement.dataset.scene = name;
       try { scene.mount(root, opts || {}); } catch (e) { console.error('[GG] mount', name, e); }
-      requestAnimationFrame(function () { root.classList.add('in'); });
+      GG.raf(function () { root.classList.add('in'); });
       setTimeout(function () { busy = false; }, 240);
     }
 
@@ -124,10 +134,11 @@
   };
 
   /* navigate with retry: a tap during the router's fade window must not be lost */
-  GG.nav = function (name, tries) {
+  GG.nav = function (name, opts, tries) {
+    if (typeof opts === 'number') { tries = opts; opts = null; }
     var n = tries == null ? 15 : tries;
-    if (GG.go(name)) return true;
-    if (n > 0) setTimeout(function () { GG.nav(name, n - 1); }, 100);
+    if (GG.go(name, opts)) return true;
+    if (n > 0) setTimeout(function () { GG.nav(name, opts, n - 1); }, 100);
     return false;
   };
 
@@ -215,7 +226,7 @@
 
   /* ---------- receipt ---------- */
   GG.receipt = function (root, data) {
-    var card = GG.el('div', { class: 'receipt-card' });
+    var card = GG.el('div', { class: 'receipt-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'AI PC receipt' });
     card.append(GG.el('div', { class: 'receipt-stamp', text: 'AI PC RECEIPT · NO CLOUD INVOLVED' }));
 
     var lines = GG.el('div', { class: 'receipt-lines' });
@@ -224,7 +235,7 @@
         GG.el('span', { class: 'tick', text: '✓' }), line));
     });
     card.append(lines);
-    card.append(GG.el('h2', { class: 'receipt-headline', text: data.headline }));
+    card.append(GG.el('h2', { class: 'receipt-headline', role: 'status', 'aria-live': 'polite', text: data.headline }));
     if (data.body) card.append(GG.el('p', { class: 'receipt-body', text: data.body }));
 
     var btn = GG.el('button', { class: 'btn', type: 'button', text: data.nextLabel || 'Next' });
@@ -236,5 +247,6 @@
 
     root.append(GG.el('section', { class: 'receipt-scene' }, card));
     GG.audio.chime();
+    try { btn.focus({ preventScroll: true }); } catch (e) {}
   };
 })();

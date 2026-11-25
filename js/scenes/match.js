@@ -36,7 +36,7 @@
       again.addEventListener('click', function () {
         GG.audio.pop();
         GG.reset();
-        GG.nav('attract');
+        GG.nav('attract', { action: 'restart' });
       });
 
       screen.append(

@@ -83,6 +83,9 @@
 
       function renderPoster(animate) {
         var p = GG.poster.composePoster(state);
+        posterEl.setAttribute('aria-label',
+          'Poster preview: ' + GG.poster.VIBES[p.vibe].label + ', ' +
+          GG.poster.TYPES[p.type].label + ', ' + GG.poster.FINISHES[p.finish].label);
         posterEl.style.background = p.bg;
         posterEl.style.color = p.ink;
         posterEl.replaceChildren();
@@ -157,7 +160,7 @@
             lines: ['WI-FI: OFF THE WHOLE TIME', 'GENERATED ON THIS LAPTOP · NOTHING UPLOADED'],
             headline: 'The AI is inside the laptop.',
             body: 'Not in a data centre. Not on a subscription.',
-            next: function () { GG.nav('verdict'); }
+            next: function () { GG.nav('verdict', { action: 'next' }); }
           });
         });
       }

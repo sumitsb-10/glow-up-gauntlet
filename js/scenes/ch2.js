@@ -18,12 +18,11 @@
       var photoWrap = GG.el('div', { class: 'photo-wrap' });
       var photo = GG.el('div', { class: 'photo' });
       var handle = GG.el('div', { class: 'handle hidden', role: 'slider', tabindex: '0', 'aria-label': 'Extend the photo frame', 'aria-valuemin': '0', 'aria-valuemax': '200', 'aria-valuenow': '0' });
-      var bottom = GG.el('div', { class: 'ed-bottom' });
+      var bottom = GG.el('div', { class: 'ed-bottom', role: 'status', 'aria-live': 'polite' });
       var stamp = GG.el('div', { class: 'stamp', text: 'APP CRASHED' });
 
       photo.innerHTML = GG.art.groupPhoto();
-      photoWrap.append(photo, handle);
-      stage.append(photoWrap, stamp);
+      photoWrap.append(photo, handle);      stage.append(photoWrap, stamp);
       ed.append(
         GG.el('div', { class: 'ed-bar' },
           GG.el('span', { class: 'lp-dots', 'aria-hidden': 'true' }, [GG.el('i'), GG.el('i'), GG.el('i')]),
@@ -35,6 +34,15 @@
       );
       screen.append(ed);
       root.append(screen);
+
+      /* keyboard path to the same selection the tap gives you */
+      var hit = photo.querySelector('.bomber-hit');
+      if (hit) {
+        hit.addEventListener('keydown', function (e) {
+          if (step !== 'remove') return;
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); selectBomber(); }
+        });
+      }
 
       /* ---------- bottom bar ---------- */
       function setBottom(title, sub, actions) {
@@ -65,7 +73,7 @@
           GG.el('div', { class: 'exp-bar' }, GG.el('i'))
         );
         stage.append(exp);
-        requestAnimationFrame(function () { exp.classList.add('go'); });
+        GG.raf(function () { exp.classList.add('go'); });
 
         var pct = exp.querySelector('.exp-pct');
         var n = 0;
@@ -89,7 +97,7 @@
             var rescue = GG.el('button', { class: 'btn rescue', type: 'button', text: 'OKAY. USE THE AI PC' });
             rescue.addEventListener('click', goAI);
             screen.append(rescue);
-            requestAnimationFrame(function () { rescue.classList.add('show'); });
+            GG.raf(function () { rescue.classList.add('show'); });
             setBottom('Cool RGB though.', 'It crashed at 99%. On one photo.', []);
           });
         });
@@ -117,6 +125,7 @@
           return c;
         });
         setBottom('He was not invited.', 'Pick any. They all do the same thing.', chips);
+        GG.timers.after(40, function () { try { chips[0].focus({ preventScroll: true }); } catch (e) {} });
       }
 
       function removeBomber() {
@@ -165,7 +174,7 @@
             lines: ['GENERATIVE FILL · ON-DEVICE', 'NO UPLOAD · NO ACCOUNT · NOTHING LEFT THE MACHINE'],
             headline: 'Your photos never left this laptop.',
             body: 'No upload, no sign-in, no "processing…".',
-            next: function () { GG.nav('ch3'); }
+            next: function () { GG.nav('ch3', { action: 'next' }); }
           });
         });
       }

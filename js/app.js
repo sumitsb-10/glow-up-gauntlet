@@ -45,7 +45,7 @@
     lastInput = Date.now();
     if (GG.current === 'attract') return;
     GG.reset();
-    GG.go('attract');
+    GG.nav('attract', { action: 'idle' });
   }, 1000);
 
   /* boot */

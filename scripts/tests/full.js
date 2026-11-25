@@ -81,7 +81,7 @@ await wait(900);
 step('verdict');
 
 q('.vd-cta').click();
-await wait(1100);
+await wait(1700);
 step('verdict-run', { cta: q('.vd-cta').textContent });
 
 q('.vd-cta').click();
@@ -93,4 +93,11 @@ out.matchTitle = q('.match-title') && q('.match-title').textContent;
 out.stats = Array.from(document.querySelectorAll('.mstat')).map((s) => s.textContent.trim());
 out.spec = q('.match-spec') && q('.match-spec').textContent;
 out.wifiBadge = true;
+
+const stageRect = q('#stage').getBoundingClientRect();
+out.viewport = [window.innerWidth, window.innerHeight];
+out.stage = [Math.round(stageRect.left), Math.round(stageRect.top), Math.round(stageRect.width), Math.round(stageRect.height)];
+out.scroll = [document.documentElement.scrollWidth, document.documentElement.scrollHeight];
+out.stageFits = stageRect.left >= -1 && stageRect.top >= -1 &&
+  stageRect.right <= window.innerWidth + 1 && stageRect.bottom <= window.innerHeight + 1;
 return out;

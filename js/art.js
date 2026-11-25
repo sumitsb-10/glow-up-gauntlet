@@ -92,7 +92,7 @@
 
     var bomberSvg =
       '<g class="bomber">' +
-        '<rect class="bomber-hit" x="' + (bomber.x - 80) + '" y="' + (bomber.y - 110) + '" width="160" height="330" fill="#fff" opacity="0" pointer-events="all"/>' +
+        '<rect class="bomber-hit" x="' + (bomber.x - 80) + '" y="' + (bomber.y - 110) + '" width="160" height="330" fill="#fff" opacity="0" pointer-events="all" tabindex="0" role="button" aria-label="Select the photobomber"/>' +
         body(bomber) +
         head(bomber) +
         '<g transform="translate(' + bomber.x + ',' + bomber.y + ') scale(' + bomber.s + ')">' +

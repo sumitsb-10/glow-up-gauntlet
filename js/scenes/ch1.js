@@ -142,7 +142,7 @@
         rescue = GG.el('button', { class: 'btn rescue', type: 'button', text: 'OKAY. USE THE AI PC' });
         rescue.addEventListener('click', goAI);
         screen.append(rescue);
-        requestAnimationFrame(function () { rescue.classList.add('show'); });
+        GG.raf(function () { rescue.classList.add('show'); });
       }
 
       function goAI() {
@@ -214,6 +214,7 @@
       }
 
       function renderDoc() {
+        if (phase === 'doc') return;
         phase = 'doc';
         GG.audio.pop();
         var page = GG.el('div', { class: 'doc-page' });
@@ -228,7 +229,7 @@
         var ask = GG.el('div', { class: 'doc-ask' });
         ask.append(GG.el('div', { class: 'ai-badge', text: 'ASK THIS LAPTOP' }));
         var submit = GG.el('button', { class: 'btn submit', type: 'button', text: 'SUBMIT', disabled: 'disabled' });
-        var hint = GG.el('p', { class: 'doc-hint', text: 'Tap a question. It reads all 40 pages locally.' });
+        var hint = GG.el('p', { class: 'doc-hint', role: 'status', 'aria-live': 'polite', text: 'Tap a question. It reads all 40 pages locally.' });
 
         QA.forEach(function (item) {
           var c = GG.el('button', { class: 'chip q', type: 'button', text: item.q });
@@ -238,7 +239,8 @@
             var target = page.querySelector('[data-i="' + item.i + '"]');
             if (target) {
               target.classList.add('found');
-              try { target.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) {}
+              var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+              try { target.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
             }
             submit.disabled = false;
             hint.textContent = 'Found instantly · on this laptop · nothing uploaded';
@@ -250,7 +252,11 @@
 
         ask.append(hint, submit);
 
+        var submitted = false;
         submit.addEventListener('click', function () {
+          if (submitted) return;
+          submitted = true;
+          submit.disabled = true;
           GG.audio.chime();
           GG.state.results.push({
             id: 'deadline',
@@ -264,7 +270,7 @@
               lines: ['40-PAGE PDF · READ ON THIS LAPTOP', 'WI-FI OFF · NOTHING UPLOADED'],
               headline: 'This is the NPU.',
               body: 'AI that runs on the machine, not on a server.',
-              next: function () { GG.go('ch2'); }
+              next: function () { GG.nav('ch2', { action: 'next' }); }
             });
           });
         });

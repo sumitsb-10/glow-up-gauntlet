@@ -30,12 +30,16 @@ const EDGE = [
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
+const extraArgs = [];
+if (args.includes('--reduce')) extraArgs.push('--force-prefers-reduced-motion');
+
 const proc = spawn(EDGE, [
   '--headless=new',
   '--disable-gpu',
   '--no-first-run',
   '--hide-scrollbars',
   '--disable-extensions',
+  ...extraArgs,
   `--remote-debugging-port=${PORT}`,
   `--user-data-dir=${process.env.TEMP}\\gg-e2e-${PORT}`,
   `--window-size=${W},${H}`,

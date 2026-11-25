@@ -4,7 +4,7 @@
 An in-store, touch-first game that turns "why an AI PC?" into "I want that one."
 
 Date: 2026-11-25
-Status: awaiting approval
+Status: built (2026-11-25) — run instructions and QA results in `README.md`
 
 ---
 

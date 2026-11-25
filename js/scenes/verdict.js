@@ -103,12 +103,13 @@
           });
           GG.timers.after(420, function () { GG.audio.chime(); });
           cta.textContent = 'SEE YOUR MATCH';
-          phase = 'done';
+          /* let the flip play before the same button can advance */
+          GG.timers.after(1500, function () { phase = 'done'; });
           return;
         }
         if (phase === 'done') {
           GG.audio.pop();
-          GG.nav('match');
+          GG.nav('match', { action: 'next' });
         }
       });
 

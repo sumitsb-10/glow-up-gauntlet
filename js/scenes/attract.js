@@ -52,7 +52,7 @@
         if (started) return;
         started = true;
         GG.audio.pop();
-        GG.nav('intro');
+        GG.nav('intro', { action: 'start' });
       }
 
       GG.on(screen, 'pointerdown', start);
@@ -62,7 +62,7 @@
       });
 
       /* let a keyboard user land on the play button immediately */
-      setTimeout(function () { try { play.focus({ preventScroll: true }); } catch (e) {} }, 60);
+      GG.timers.after(60, function () { try { play.focus({ preventScroll: true }); } catch (e) {} });
     },
     unmount: function () {}
   });

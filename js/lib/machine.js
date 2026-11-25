@@ -1,17 +1,15 @@
 (function (root) {
   'use strict';
 
-  var SCENES = ['attract', 'intro', 'ch1', 'r1', 'ch2', 'r2', 'ch3', 'r3', 'verdict', 'match'];
+  /* Receipts are overlays inside each challenge, so the scene graph is linear. */
+  var SCENES = ['attract', 'intro', 'ch1', 'ch2', 'ch3', 'verdict', 'match'];
 
   var TABLE = {
     'attract|start': 'intro',
     'intro|vibe': 'ch1',
-    'ch1|ch1done': 'r1',
-    'r1|next': 'ch2',
-    'ch2|ch2done': 'r2',
-    'r2|next': 'ch3',
-    'ch3|ch3done': 'r3',
-    'r3|next': 'verdict',
+    'ch1|next': 'ch2',
+    'ch2|next': 'ch3',
+    'ch3|next': 'verdict',
     'verdict|next': 'match',
     'attract|idle': 'attract',
     'match|idle': 'attract'
