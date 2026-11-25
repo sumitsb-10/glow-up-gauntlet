@@ -7,11 +7,11 @@
     { t: 'notes(3).pdf', x: 64, y: 108, r: -7, d: 7.5, c: '' },
     { t: 'Assignment_FINAL_v7.pdf', x: 792, y: 128, r: 5, d: 9, c: 'blue' },
     { t: 'IMG_2041.PNG', x: 116, y: 566, r: 4, d: 8, c: '' },
-    { t: 'screenshot 2026-11-24.png', x: 742, y: 604, r: -5, d: 10, c: '' },
+    { t: 'screenshot 2026-11-24.png', x: 946, y: 686, r: -5, d: 10, c: '' },
     { t: 'battery 3%', x: 392, y: 56, r: 3, d: 6.5, c: 'acid' },
-    { t: 'buffering…', x: 902, y: 352, r: -4, d: 8.5, c: '' },
+    { t: 'buffering…', x: 1040, y: 236, r: -4, d: 8.5, c: '' },
     { t: 'fan: loud', x: 62, y: 330, r: 6, d: 7, c: '' },
-    { t: 'tab 47 of 47', x: 486, y: 700, r: -3, d: 9.5, c: '' }
+    { t: 'tab 47 of 47', x: 486, y: 722, r: -3, d: 9.5, c: '' }
   ];
 
   GG.register('attract', {
