@@ -40,7 +40,8 @@
   });
   setInterval(function () {
     if (GG.current !== 'attract' && GG.current !== 'match') return;
-    if (Date.now() - lastInput < IDLE_MS) return;
+    var limit = GG.current === 'match' ? 45000 : IDLE_MS;
+    if (Date.now() - lastInput < limit) return;
     lastInput = Date.now();
     if (GG.current === 'attract') return;
     GG.reset();
