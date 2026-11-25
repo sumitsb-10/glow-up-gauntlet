@@ -1,0 +1,10 @@
+const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const q = (s) => document.querySelector(s);
+await wait(500);
+q('.handle').click();
+await wait(700);
+q('.handle').click();
+await wait(700);
+q('.handle').click();
+await wait(900);
+return { reveal: q('.handle').getAttribute('aria-valuenow'), clip: q('.photo').style.clipPath };

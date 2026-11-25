@@ -335,3 +335,158 @@
   z-index: 30;
 }
 @keyframes flash { 0% { opacity: 0; } 18% { opacity: .5; } 100% { opacity: 0; } }
+
+/* ---------- challenge 2: photo editor ---------- */
+.ch2 { padding: 26px 36px 34px; background: radial-gradient(80% 70% at 50% 0%, #1a1218 0%, var(--ink) 62%); }
+
+.ed {
+  flex: 1; min-height: 0;
+  display: flex; flex-direction: column;
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  background: #0b0d12;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0,0,0,.5);
+  position: relative;
+}
+.ed-bar {
+  height: 46px; flex: none;
+  display: flex; align-items: center; gap: 14px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.03);
+  font: 600 13px/1 var(--mono);
+  color: var(--dim);
+}
+.ed-name { flex: 1; }
+.ed-stage {
+  position: relative;
+  flex: 1; min-height: 0;
+  display: flex; align-items: center; justify-content: center;
+  padding: 18px;
+  background:
+    linear-gradient(45deg, rgba(255,255,255,.02) 25%, transparent 25%, transparent 75%, rgba(255,255,255,.02) 75%) 0 0 / 28px 28px,
+    #080a0e;
+}
+.ed-bottom {
+  flex: none;
+  min-height: 104px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--line);
+  background: rgba(255,255,255,.02);
+  display: flex; align-items: center; gap: 18px;
+}
+.ed-prompt { flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.ed-prompt b { font: 800 22px/1.15 var(--font); letter-spacing: -.01em; }
+.ed-prompt span { font: 500 14px/1.3 var(--mono); color: var(--dim); }
+.ed-actions { display: flex; gap: 10px; align-items: center; }
+
+.photo-wrap { position: relative; width: 900px; height: 520px; flex: none; }
+.photo {
+  position: absolute; inset: 0;
+  border-radius: 16px;
+  overflow: hidden;
+  clip-path: inset(0 200px 0 0);
+  transition: clip-path .45s cubic-bezier(.2,.9,.25,1);
+  box-shadow: 0 24px 60px rgba(0,0,0,.55);
+}
+.photo svg { width: 900px; height: 520px; display: block; }
+
+.bomber { clip-path: inset(0 0 0 0); transition: clip-path .6s cubic-bezier(.4,0,.2,1); }
+.photo.removed .bomber { clip-path: inset(0 0 0 100%); }
+.sel { opacity: 0; transition: opacity .18s ease; }
+.photo.selected .sel { opacity: 1; }
+.bomber-hit { cursor: pointer; }
+
+.handle {
+  position: absolute;
+  top: 50%;
+  left: 700px;
+  width: 30px; height: 150px;
+  transform: translate(-50%, -50%);
+  display: flex; align-items: center; justify-content: center;
+  cursor: ew-resize;
+  touch-action: none;
+  z-index: 5;
+  transition: left .12s linear;
+}
+.handle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: rgba(214,255,63,.16);
+  border: 2px solid var(--acid);
+  box-shadow: 0 0 30px rgba(214,255,63,.35);
+  animation: pulse 1.8s ease-in-out infinite;
+}
+.handle::after {
+  content: "DRAG";
+  position: relative;
+  font: 900 10px/1 var(--mono);
+  color: var(--acid);
+  writing-mode: vertical-rl;
+  letter-spacing: .22em;
+}
+.handle.hidden { display: none; }
+
+.exp {
+  position: absolute;
+  left: 50%; bottom: 28px;
+  transform: translateX(-50%);
+  width: 460px;
+  padding: 16px 20px;
+  border-radius: 16px;
+  background: rgba(8,9,12,.92);
+  border: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 10px;
+  z-index: 8;
+  animation: fade-in .2s ease;
+}
+.exp-l { font: 700 12px/1 var(--mono); letter-spacing: .12em; color: var(--dim); display: flex; justify-content: space-between; }
+.exp-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.exp-bar i { display: block; height: 100%; width: 0; background: var(--blue-hi); border-radius: 999px; }
+.exp.go .exp-bar i { width: 99%; transition: width 1.35s cubic-bezier(.3,.1,.4,1); }
+.exp.stuck .exp-bar i { background: var(--bad); }
+.exp.stuck .exp-l { color: var(--bad); }
+
+.stamp {
+  position: absolute;
+  left: 50%; top: 44%;
+  transform: translate(-50%, -50%) rotate(-8deg) scale(.7);
+  padding: 14px 26px;
+  border: 4px solid var(--bad);
+  border-radius: 10px;
+  color: var(--bad);
+  font: 900 40px/1 var(--font);
+  letter-spacing: .04em;
+  opacity: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+.stamp.show { animation: stamp-in .35s cubic-bezier(.2,1.4,.4,1) forwards; }
+@keyframes stamp-in { to { opacity: 1; transform: translate(-50%, -50%) rotate(-8deg) scale(1); } }
+
+.ch2.crashed .ed { animation: shake .4s ease; }
+@keyframes shake {
+  0%,100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  50% { transform: translateX(6px); }
+  80% { transform: translateX(-3px); }
+}
+
+.brush {
+  position: absolute;
+  width: 120px; height: 120px;
+  border-radius: 50%;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(214,255,63,.55), rgba(214,255,63,0));
+  z-index: 7;
+  animation: brush-wipe .6s ease-in-out forwards;
+}
+@keyframes brush-wipe {
+  from { transform: translateX(-40px) scale(.6); opacity: 1; }
+  to { transform: translateX(120px) scale(1.2); opacity: 0; }
+}
+
+/* ---------- challenge 3: poster ---------- */
