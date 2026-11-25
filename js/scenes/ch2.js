@@ -35,6 +35,16 @@
       screen.append(ed);
       root.append(screen);
 
+      GG.skip(screen, function () { GG.nav('ch3', { action: 'next' }); });
+      GG.hint(screen, function () {
+        if (document.querySelector('.receipt-card')) return null;
+        if (step === 'gag') return bottom.querySelector('.ed-actions .btn');
+        if (step === 'rescue') return screen.querySelector('.rescue');
+        if (step === 'remove') return photo.querySelector('.bomber-hit');
+        if (step === 'extend') return handle.classList.contains('hidden') ? null : handle;
+        return null;
+      });
+
       /* keyboard path to the same selection the tap gives you */
       var hit = photo.querySelector('.bomber-hit');
       if (hit) {

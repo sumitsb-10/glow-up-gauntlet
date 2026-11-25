@@ -24,7 +24,7 @@
     'A mixed-method approach was used: 41 campaign datasets, 12 interviews with media buyers, and a survey of 2,400 respondents across four metros.',
     'The analysis draws on 41 sources, all cited in the appendix beginning on page 38, including platform transparency reports and agency benchmark studies.',
     'The discussion considers why static creative still dominates retail media budgets despite weaker recall, and what that gap costs brands per acquisition.',
-    'Excluding references and appendices, the report runs to 6,412 words. The full submission, including figures, is 22 pages.',
+    'Excluding references and appendices, the report runs to 6,412 words. The full submission, including figures, is 40 pages.',
     'The conclusion recommends reallocating at least 30% of static display budget to short-form video for this cohort, with quarterly creative refresh.'
   ];
 
@@ -49,11 +49,25 @@
       screen.append(lp);
       root.append(screen);
 
+      GG.skip(screen, function () { GG.nav('ch2', { action: 'next' }); });
+      GG.hint(screen, function () {
+        if (document.querySelector('.receipt-card')) return null;
+        if (screen.classList.contains('crashed')) return rescue;
+        if (phase === 'doc') return answered ? body.querySelector('.submit') : body.querySelector('.chip.q');
+        if (phase === 'ai') {
+          return searched ? (body.querySelector('.file.hot') || body.querySelector('[data-name="Assignment_FINAL_v7.pdf"]'))
+            : body.querySelector('.ai-chips .chip');
+        }
+        return body.querySelector('.file');
+      });
+
       var phase = 'lag';
       var taps = 0;
       var lagIds = [];
       var rescue = null;
       var fan = null;
+      var answered = false;
+      var searched = false;
 
       function after(ms, fn) {
         var id = GG.timers.after(ms, fn);
@@ -104,12 +118,19 @@
         });
       }
 
+      function stageScale() {
+        var st = document.getElementById('stage');
+        var r = st.getBoundingClientRect();
+        return r.width / 1280 || 1;
+      }
+
       function lagTap(el, ev) {
         taps += 1;
         var b = body.getBoundingClientRect();
         var r = el.getBoundingClientRect();
-        var x = (ev.clientX || r.left + r.width / 2) - b.left;
-        var y = (ev.clientY || r.top + r.height / 2) - b.top;
+        var s = stageScale();
+        var x = ((ev.clientX || r.left + r.width / 2) - b.left) / s;
+        var y = ((ev.clientY || r.top + r.height / 2) - b.top) / s;
 
         tapRing(x, y, 430);
 
@@ -126,13 +147,20 @@
         screen.classList.add('crashed');
         barTitle.textContent = 'Assignment_FINAL_v7.pdf — (Not responding)';
         if (fan) { fan.classList.add('loud'); fan.querySelector('.fan-v').textContent = 'LOUD'; }
-        body.append(GG.el('div', { class: 'crash' },
+        var crash = GG.el('div', {
+          class: 'crash', role: 'alertdialog', 'aria-modal': 'true',
+          'aria-label': 'Laptop not responding'
+        },
           GG.el('div', { class: 'crash-card' },
             GG.el('div', { class: 'spinner' }),
             GG.el('div', { class: 'crash-t', text: 'NOT RESPONDING' }),
             GG.el('div', { class: 'crash-s', text: 'Cool laptop though.' })
           )
-        ));
+        );
+        body.append(crash);
+        Array.prototype.slice.call(body.children).forEach(function (el) {
+          if (el !== crash) el.inert = true;
+        });
         GG.audio.fan();
         showRescue();
       }
@@ -142,7 +170,12 @@
         rescue = GG.el('button', { class: 'btn rescue', type: 'button', text: 'OKAY. USE THE AI PC' });
         rescue.addEventListener('click', goAI);
         screen.append(rescue);
-        GG.raf(function () { rescue.classList.add('show'); });
+        GG.raf(function () {
+          rescue.classList.add('show');
+          if (screen.classList.contains('crashed')) {
+            try { rescue.focus({ preventScroll: true }); } catch (e) {}
+          }
+        });
       }
 
       function goAI() {
@@ -159,6 +192,7 @@
       }
 
       function renderSearch() {
+        searched = false;
         var search = GG.el('div', { class: 'ai-search' });
         var chips = GG.el('div', { class: 'ai-chips' });
         ['assignment', 'receipt', 'screenshot'].forEach(function (word) {
@@ -188,6 +222,7 @@
       function runSearch(search) {
         if (search.classList.contains('done')) return;
         search.classList.add('done');
+        searched = true;
         GG.audio.whoosh();
         var grid = body.querySelector('.file-grid');
         Array.prototype.slice.call(grid.children).forEach(function (el) {
@@ -219,7 +254,7 @@
         GG.audio.pop();
         var page = GG.el('div', { class: 'doc-page' });
         page.append(GG.el('h4', { text: 'MKTG 201 — FINAL REPORT' }));
-        page.append(GG.el('div', { class: 'doc-meta', text: 'Submitted by you · 22 pages · draft 7' }));
+        page.append(GG.el('div', { class: 'doc-meta', text: 'Submitted by you · 40 pages · draft 7' }));
         PARA.forEach(function (text, i) {
           var p = GG.el('p', { class: 'para', 'data-i': String(i), text: text });
           page.append(p);
@@ -242,6 +277,7 @@
               var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
               try { target.scrollIntoView({ block: 'center', behavior: reduce ? 'auto' : 'smooth' }); } catch (e) {}
             }
+            answered = true;
             submit.disabled = false;
             hint.textContent = 'Found instantly · on this laptop · nothing uploaded';
             ask.querySelectorAll('.chip').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });

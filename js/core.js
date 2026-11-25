@@ -11,6 +11,7 @@
   var timers = new Set();
   var rafs = new Set();
   var busy = false;
+  var modalRelease = null;
 
   /* ---------- DOM ---------- */
   GG.el = function (tag, attrs) {
@@ -80,6 +81,59 @@
     return function () { el.removeEventListener(ev, fn); };
   };
 
+  GG.focusables = function (root) {
+    return Array.prototype.slice.call(root.querySelectorAll(
+      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+    )).filter(function (el) {
+      return !el.disabled && el.getClientRects().length > 0;
+    });
+  };
+
+  /* a persistent, low-emphasis escape from any challenge */
+  GG.skip = function (screen, onSkip) {
+    var btn = GG.el('button', {
+      class: 'skip', type: 'button', text: 'SKIP THIS ONE',
+      'aria-label': 'Skip this challenge'
+    });
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      GG.audio.tap();
+      onSkip();
+    });
+    screen.append(btn);
+    return btn;
+  };
+
+  /* pulse the next valid target after 12s without input */
+  GG.hint = function (screen, getTarget, delay) {
+    var timer = null;
+    var hinted = null;
+
+    function clearHint() {
+      if (hinted) { hinted.classList.remove('hint'); hinted = null; }
+    }
+    function arm() {
+      if (timer) { GG.timers.cancel(timer); timer = null; }
+      clearHint();
+      timer = GG.timers.after(delay || 12000, function () {
+        timer = null;
+        hinted = getTarget && getTarget();
+        if (hinted) hinted.classList.add('hint');
+      });
+    }
+
+    screen.addEventListener('pointerdown', arm, true);
+    screen.addEventListener('keydown', arm, true);
+    arm();
+    return {
+      reset: arm,
+      stop: function () {
+        if (timer) { GG.timers.cancel(timer); timer = null; }
+        clearHint();
+      }
+    };
+  };
+
   /* ---------- stage ---------- */
   GG.stage = {
     fit: function () {
@@ -113,6 +167,10 @@
     var outgoing = GG.current;
 
     function swap() {
+      if (modalRelease) {
+        try { modalRelease(); } catch (e) {}
+        modalRelease = null;
+      }
       if (outgoing && GG.SCENES[outgoing] && GG.SCENES[outgoing].unmount) {
         try { GG.SCENES[outgoing].unmount(); } catch (e) { console.error('[GG] unmount', outgoing, e); }
       }
@@ -226,7 +284,35 @@
 
   /* ---------- receipt ---------- */
   GG.receipt = function (root, data) {
+    var opener = document.activeElement;
     var card = GG.el('div', { class: 'receipt-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'AI PC receipt' });
+    var overlay = GG.el('section', { class: 'receipt-scene' }, card);
+    var siblings = Array.prototype.slice.call(root.children);
+    var mute = document.getElementById('mute');
+
+    function release() {
+      siblings.forEach(function (el) { el.inert = false; });
+      if (mute) mute.inert = false;
+      card.removeEventListener('keydown', trap);
+      try { if (opener && opener.focus) opener.focus({ preventScroll: true }); } catch (e) {}
+    }
+
+    function trap(e) {
+      if (e.key !== 'Tab') return;
+      var f = GG.focusables(card);
+      if (!f.length) return;
+      var first = f[0];
+      var last = f[f.length - 1];
+      var inside = card.contains(document.activeElement);
+      if (e.shiftKey && (!inside || document.activeElement === first)) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && (!inside || document.activeElement === last)) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+
     card.append(GG.el('div', { class: 'receipt-stamp', text: 'AI PC RECEIPT · NO CLOUD INVOLVED' }));
 
     var lines = GG.el('div', { class: 'receipt-lines' });
@@ -241,11 +327,17 @@
     var btn = GG.el('button', { class: 'btn', type: 'button', text: data.nextLabel || 'Next' });
     btn.addEventListener('click', function () {
       GG.audio.pop();
+      if (modalRelease === release) modalRelease = null;
+      release();
       if (typeof data.next === 'function') data.next();
     });
     card.append(GG.el('div', { class: 'receipt-actions' }, btn));
 
-    root.append(GG.el('section', { class: 'receipt-scene' }, card));
+    card.addEventListener('keydown', trap);
+    siblings.forEach(function (el) { el.inert = true; });
+    if (mute) mute.inert = true;
+    modalRelease = release;
+    root.append(overlay);
     GG.audio.chime();
     try { btn.focus({ preventScroll: true }); } catch (e) {}
   };

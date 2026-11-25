@@ -84,13 +84,24 @@ check('ch2Receipt', !!q('.receipt-card'));
 q('.receipt-actions .btn').click();
 await wait(900);
 
-// ch3: one pressed chip per group, poster label updates
+// ch3: starts neutral, one pressed chip per group after picking, POST gated until all three
 const groups = Array.from(document.querySelectorAll('.ctl-group'));
-check('oneChoicePerGroup', groups.length === 3 && groups.every((g) => g.querySelectorAll('[aria-pressed="true"]').length === 1));
+check('startsUnpicked', groups.length === 3 && groups.every((g) => g.querySelectorAll('[aria-pressed="true"]').length === 0));
+check('postGated', q('.post-btn').disabled);
 const before = q('.poster').getAttribute('aria-label');
-Array.from(document.querySelectorAll('.vibe-chip')).find((c) => c.textContent.includes('Y2K')).click();
-await wait(300);
+const chipFor = (t) => Array.from(document.querySelectorAll('.vibe-chip')).find((c) => c.textContent.includes(t));
+chipFor('Y2K').click();
+await wait(250);
+check('oneChoicePerGroup', groups[0].querySelectorAll('[aria-pressed="true"]').length === 1 &&
+  groups[1].querySelectorAll('[aria-pressed="true"]').length === 0 &&
+  groups[2].querySelectorAll('[aria-pressed="true"]').length === 0);
 check('posterLabelUpdates', q('.poster').getAttribute('aria-label') !== before);
+check('postStillGated', q('.post-btn').disabled);
+chipFor('SERIF').click();
+await wait(200);
+chipFor('GRAINY').click();
+await wait(300);
+check('postEnabled', !q('.post-btn').disabled);
 q('.post-btn').click();
 await wait(1100);
 q('.receipt-actions .btn').click();

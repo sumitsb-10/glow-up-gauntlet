@@ -32,7 +32,7 @@ The game works from `file://` because every script is a classic `<script>` tag, 
 | 2:15 | Verdict | Three receipts, then the trap flip: the pretty cheap laptop can't run any of it. The Intel AI PC runs all three. |
 | 2:35 | Match | `YOUR MATCH`, the vibe line, the spec, `3 receipts · none uploaded · Wi-Fi off`, and `Screenshot this.` |
 
-No shopper is ever timed out mid-challenge. Idle resets only on the attract screen (25 s) and the match card (45 s).
+No shopper is ever timed out mid-challenge. Idle resets only on the attract screen (25 s) and the match card (45 s). Every challenge shows a **Skip this one** button, and after ~12 s without input the next valid target pulses gently.
 
 ---
 
@@ -53,7 +53,7 @@ Phase links for demos and screenshots:
 - `?scene=ch3&phase=receipt` — posts automatically, shows the receipt
 - `?scene=verdict&phase=run` — runs the trap flip automatically
 
-Deep links are debug/demo shortcuts. A real run always starts at the attract screen.
+Deep links are debug/demo shortcuts. A real run always starts at the attract screen. Jumping straight to `verdict` seeds the three demo receipts, so the tally and the match card reached from it stay consistent (`3 receipts · none uploaded · Wi-Fi off`). A direct `?scene=match` has no run behind it and correctly shows `0 receipts`.
 
 ---
 
@@ -88,10 +88,11 @@ This is a concept demo built for a hackathon brief, not a shipping product or an
 
 - Touch targets are at least 64 px; every primary action is a real `<button>`.
 - Keyboard: the play button is focused on load; `Enter`/`Space` work on native controls; the photobomber is focusable with `role="button"`; the frame handle is a `role="slider"` with arrow-key and `Enter` support.
-- Receipts are `role="dialog"` with a live headline and focus moved to **Next**.
-- `prefers-reduced-motion: reduce` collapses every animation to 1 ms / one iteration; the full game still completes.
+- Receipts are modal `role="dialog"` overlays: the challenge and mute button go `inert`, Tab is trapped inside the card, focus moves to **Next**, and it returns to the opener on close. The crash card is a focused `role="alertdialog"`.
+- Every challenge has a visible **Skip this one** (64 px); after ~12 s without input, the next valid target gets a gentle hint pulse that clears on the next tap.
+- `prefers-reduced-motion: reduce` collapses every animation to 1 ms / one iteration; the verdict fast-paths to its final state. The full game still completes.
 - Audio is unlocked on the first interaction and stays silent if the browser blocks it. Muted is the default.
-- Focus-visible rings on every custom control; status changes are shown with text and shape, not colour alone.
+- Focus-visible rings on every custom control (the frame handle rings on its 30 px visual, not its 120 px hit zone); status changes are shown with text and shape, not colour alone.
 - The 1280×800 stage scales to fit the viewport and letterboxes on near-black. Nothing scrolls.
 
 ---
@@ -114,6 +115,15 @@ All runs on Windows, headless Microsoft Edge, from `file://`.
 | Rapid taps | triple-tap play/vibe/next lands correctly; invalid jump blocked |
 | Double taps | ch1 submit records one receipt; verdict flip cannot be skipped |
 | Scene cleanup stress | 10 × `ch1 → attract → ch1`, one `.lp` / 12 files each time, zero console errors |
+| Skip + hint | 3 skips reach verdict; 12 s hint pulses the next target; verdict seeds 3 receipts |
+| Handle hit zone | 120×150 px target, ±45 px taps land, 30 px visual, focus ring on the visual |
+| Receipt containment | challenge + mute `inert`, 0 outside tabbables, Tab trapped, focus restored |
+| Crash dialog | `role="alertdialog"`, rescue focused when shown |
+| Tap ring alignment | error < 3 px at 1024×768 (scale .78) and 1920×1080 (scale 1.23) |
+| Verdict sequencing | greys one by one, Intel lights, tally then CTA enable; reduced-motion fast path |
+| Deep-link tally | `?scene=verdict` seeds 3; the match reached from it reports 3 receipts |
+| Copy consistency | doc meta and footer both say 40 pages |
+| Touch targets | all sampled controls ≥ 64 design px |
 
 Screenshots live in `shots/` (attract, intro, each challenge, verdict, match, plus 1024/1920 checks).
 
@@ -138,6 +148,18 @@ node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene
 
 # reduced motion
 node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html" --script scripts/tests/full.js --reduce
+
+# review regressions (script, scene)
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch3" --script scripts/tests/review-ch3.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch2&phase=extend" --script scripts/tests/review-handle.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=doc" --script scripts/tests/review-receipt.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=crash" --script scripts/tests/review-crash.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1" --script scripts/tests/review-ring.js --w 1024 --h 768
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1" --script scripts/tests/review-skip.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=verdict" --script scripts/tests/review-verdict.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=ai" --script scripts/tests/review-targets.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=verdict&phase=run" --script scripts/tests/review-tally.js
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=doc" --script scripts/tests/review-copy.js
 
 # headless smoke / screenshot helpers
 powershell -ExecutionPolicy Bypass -File scripts/smoke.ps1 -Scene ch1

@@ -18,7 +18,8 @@
 
   GG.register('ch3', {
     mount: function (root) {
-      var state = { vibe: 'neon', type: 'blocky', finish: 'maximal' };
+      var state = { vibe: null, type: null, finish: null };
+      var chipEls = {};
       var posted = false;
 
       var screen = GG.el('section', { class: 'screen ch3' });
@@ -37,15 +38,29 @@
       var posterWrap = GG.el('div', { class: 'poster-wrap' }, posterEl);
 
       var controls = GG.el('div', { class: 'ch3-controls' });
+      function allChosen() {
+        return GROUPS.every(function (g) { return !!state[g.key]; });
+      }
+
+      function syncChips() {
+        GROUPS.forEach(function (g) {
+          Object.keys(chipEls[g.key] || {}).forEach(function (key) {
+            chipEls[g.key][key].setAttribute('aria-pressed', String(state[g.key] === key));
+          });
+        });
+        postBtn.disabled = !allChosen();
+      }
+
       GROUPS.forEach(function (g) {
         var row = GG.el('div', { class: 'ctl-group' }, GG.el('span', { class: 'ctl-label', text: g.label }));
         var chips = GG.el('div', { class: 'ctl-chips' });
+        chipEls[g.key] = {};
         Object.keys(g.table).forEach(function (key) {
           var item = g.table[key];
           var chip = GG.el('button', {
             class: 'chip vibe-chip',
             type: 'button',
-            'aria-pressed': String(state[g.key] === key)
+            'aria-pressed': 'false'
           });
           var dot = GG.el('span', { class: 'swatch' });
           dot.style.background = item.swatch || (item.italic ? '#E8DCC8' : '#8A8F98');
@@ -53,18 +68,18 @@
           chip.addEventListener('click', function () {
             if (posted) return;
             state[g.key] = key;
-            row.querySelectorAll('.chip').forEach(function (c) { c.setAttribute('aria-pressed', 'false'); });
-            chip.setAttribute('aria-pressed', 'true');
+            syncChips();
             GG.audio.pop();
             renderPoster(true);
           });
           chips.append(chip);
+          chipEls[g.key][key] = chip;
         });
         row.append(chips);
         controls.append(row);
       });
 
-      var postBtn = GG.el('button', { class: 'btn post-btn', type: 'button', text: 'POST IT' });
+      var postBtn = GG.el('button', { class: 'btn post-btn', type: 'button', text: 'POST IT', disabled: 'disabled' });
       postBtn.addEventListener('click', post);
       controls.append(
         postBtn,
@@ -75,6 +90,17 @@
       screen.append(body);
       root.append(screen);
 
+      GG.skip(screen, function () { GG.nav('verdict', { action: 'next' }); });
+      GG.hint(screen, function () {
+        if (posted || document.querySelector('.receipt-card')) return null;
+        for (var i = 0; i < GROUPS.length; i++) {
+          if (!state[GROUPS[i].key]) {
+            return controls.querySelectorAll('.ctl-group')[i].querySelector('.vibe-chip');
+          }
+        }
+        return postBtn;
+      });
+
       /* cloud banner, then it dies */
       var banner = GG.el('div', { class: 'cloud-banner', html: '<b>CLOUD AI:</b> UNAVAILABLE' });
       screen.append(banner);
@@ -82,7 +108,23 @@
       GG.timers.after(2100, function () { banner.remove(); });
 
       function renderPoster(animate) {
+        if (!allChosen()) {
+          var missing = GROUPS.filter(function (g) { return !state[g.key]; })
+            .map(function (g) { return g.label; });
+          posterEl.classList.add('placeholder');
+          posterEl.classList.remove('snap');
+          posterEl.style.background = '#12151c';
+          posterEl.style.color = '#8a8f98';
+          posterEl.replaceChildren(GG.el('div', {
+            class: 'p-placeholder',
+            text: 'PICK ' + missing.join(' + ')
+          }));
+          posterEl.setAttribute('aria-label', 'Poster preview: choose ' + missing.join(', ').toLowerCase());
+          return;
+        }
+
         var p = GG.poster.composePoster(state);
+        posterEl.classList.remove('placeholder');
         posterEl.setAttribute('aria-label',
           'Poster preview: ' + GG.poster.VIBES[p.vibe].label + ', ' +
           GG.poster.TYPES[p.type].label + ', ' + GG.poster.FINISHES[p.finish].label);
@@ -141,7 +183,7 @@
       }
 
       function post() {
-        if (posted) return;
+        if (posted || !allChosen()) return;
         posted = true;
         GG.audio.chime();
         postBtn.disabled = true;
@@ -183,11 +225,17 @@
         }
       }
 
+      syncChips();
       renderPoster(false);
 
       var want = null;
       try { want = new URLSearchParams(window.location.search).get('phase'); } catch (e) {}
       if (want === 'receipt') {
+        state.vibe = 'neon';
+        state.type = 'blocky';
+        state.finish = 'maximal';
+        syncChips();
+        renderPoster(false);
         GG.timers.after(300, post);
       }
     },

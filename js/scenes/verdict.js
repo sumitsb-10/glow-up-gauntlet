@@ -67,8 +67,12 @@
 
   GG.register('verdict', {
     mount: function (root) {
-      var results = GG.state.results.length ? GG.state.results : DEFAULTS;
+      var results = GG.state.results;
+      if (!results.length) {
+        DEFAULTS.forEach(function (r) { results.push(r); });
+      }
       var phase = 'idle';
+      var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var screen = GG.el('section', { class: 'screen verdict' });
       screen.append(GG.el('header', { class: 'vd-head' },
@@ -89,22 +93,51 @@
       var intel = pcCard('intel');
       screen.append(GG.el('div', { class: 'showdown' }, pretty, GG.el('div', { class: 'vs', text: 'VS' }), intel));
 
+      var tally = GG.el('div', { class: 'vd-tally', role: 'status', 'aria-live': 'polite' },
+        GG.el('span', { class: 'mstat' }, GG.el('b', { text: String(results.length) }), ' receipts'),
+        GG.el('span', { class: 'mstat' }, GG.el('b', { text: 'none' }), ' uploaded'),
+        GG.el('span', { class: 'mstat' }, GG.el('b', { text: 'Wi-Fi off' }), '')
+      );
+      screen.append(tally);
+
       var cta = GG.el('button', { class: 'btn vd-cta', type: 'button', text: 'RUN THE AI STUFF' });
       screen.append(cta);
 
       cta.addEventListener('click', function () {
         if (phase === 'idle') {
           phase = 'running';
+          cta.disabled = true;
           GG.audio.thud();
-          pretty.classList.add('run');
-          intel.classList.add('run');
-          pretty.querySelectorAll('.ability').forEach(function (el, i) {
-            GG.timers.after(120 + i * 220, function () { GG.audio.thud(); });
+
+          var gap = reduce ? 0 : 220;
+          var hold = reduce ? 40 : 260;
+          var prettyAbilities = pretty.querySelectorAll('.ability');
+          var intelAbilities = intel.querySelectorAll('.ability');
+
+          prettyAbilities.forEach(function (el, i) {
+            GG.timers.after(i * gap, function () {
+              el.classList.add('flip');
+              if (!reduce) GG.audio.thud();
+            });
           });
-          GG.timers.after(420, function () { GG.audio.chime(); });
-          cta.textContent = 'SEE YOUR MATCH';
-          /* let the flip play before the same button can advance */
-          GG.timers.after(1500, function () { phase = 'done'; });
+
+          var prettyEnd = (prettyAbilities.length - 1) * gap + hold;
+          GG.timers.after(prettyEnd, function () {
+            pretty.classList.add('done');
+            intel.classList.add('lit');
+            GG.audio.chime();
+            intelAbilities.forEach(function (el, i) {
+              GG.timers.after(i * gap, function () { el.classList.add('live'); });
+            });
+
+            var intelEnd = (intelAbilities.length - 1) * gap + hold;
+            GG.timers.after(intelEnd, function () {
+              tally.classList.add('show');
+              cta.disabled = false;
+              cta.textContent = 'SEE YOUR MATCH';
+              phase = 'done';
+            });
+          });
           return;
         }
         if (phase === 'done') {

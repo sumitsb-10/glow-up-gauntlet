@@ -125,7 +125,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   border: 2px solid var(--line);
 }
 .btn.blue { background: var(--blue); color: #fff; }
-.btn.sm { min-height: 56px; font-size: 17px; padding: 0 24px; }
+.btn.sm { min-height: 64px; font-size: 17px; padding: 0 24px; }
 
 /* ---------- surfaces ---------- */
 .card {
@@ -152,6 +152,36 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 .chip[aria-pressed="true"] { background: var(--blue); border-color: var(--blue-hi); }
 .chip:focus-visible { outline: 3px solid var(--blue-hi); outline-offset: 3px; }
 
+.skip {
+  position: absolute;
+  top: 86px;
+  right: 52px;
+  z-index: 60;
+  min-height: 64px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 9, 12, 0.55);
+  backdrop-filter: blur(8px);
+  color: var(--dim);
+  font: 700 11px/1 var(--mono);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.6;
+}
+.skip:hover { opacity: 1; color: var(--paper); }
+.skip:focus-visible { outline: 3px solid var(--blue-hi); outline-offset: 3px; }
+
+.hint {
+  outline: 3px dashed var(--acid);
+  outline-offset: 4px;
+  animation: hint-pulse 1.4s ease-in-out infinite;
+}
+@keyframes hint-pulse {
+  50% { box-shadow: 0 0 0 10px rgba(214, 255, 63, 0.08); }
+}
+
 /* ---------- HUD ---------- */
 .mute {
   position: absolute;
@@ -161,7 +191,9 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 14px;
+  min-height: 64px;
+  min-width: 64px;
+  padding: 0 18px;
   border-radius: 999px;
   border: 1px solid var(--line);
   background: rgba(8, 9, 12, 0.6);

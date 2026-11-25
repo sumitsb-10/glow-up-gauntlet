@@ -28,6 +28,21 @@
 4. **Narrow/short viewports (1024×768)** — the 1280×800 stage is scaled, so no content may overflow the stage box; every CTA must be reachable without scrolling.
 5. **Silent and reduced-motion paths** — the game must be fully playable with audio blocked (autoplay policy) and with `prefers-reduced-motion: reduce`, with no missing state and no stuck animation.
 
+## Shipped deviations (2026-11-25)
+
+The build follows this plan except where noted. These are deliberate, reviewed deviations, not unfinished plan items.
+
+- **Linear 7-scene graph.** Receipts are overlays inside each challenge, so the scene list is `attract → intro → ch1 → ch2 → ch3 → verdict → match`. There are no `r1–r3` scenes; `ch1|next` etc. advance directly. Deep links and the pure `machine.js` table match the shipped graph.
+- **No `GG.cleanup` registry.** Every scene's async work goes through `GG.timers` / `GG.raf`, which the router drains centrally on transition. An unused parallel registry would be dead code.
+- **12 file cards, not 30.** Enough decoys to read as a messy desktop at 1280×800 while keeping every card a ≥64 px target and the search reveal legible.
+- **4 friends, not 5.** Composition balances at the narrowest supported stage; the photobomber joke still reads.
+- **40 pages, not 22.** The document and footer copy now agree (`40 pages`, `page 12 of 40`) with the verdict ability line.
+- **120 px handle hit zone, 30 px visual.** The hit area meets touch guidance; the focus ring is painted on the 30 px visual via `::before`.
+- **Challenge 3 starts neutral and gates POST.** No chip is pre-pressed; the poster shows a `PICK …` placeholder; POST stays disabled until Vibe, Type and Finish are all chosen.
+- **Verdict sequences the flip.** Pretty abilities grey one at a time, then the Intel card lights and flashes, then the tally appears; the CTA stays disabled until the sequence ends. Reduced motion fast-paths to the final state.
+- **Skip and hint on every challenge.** A visible 64 px **Skip this one** advances without a receipt; after ~12 s idle the next valid target pulses. Skipping all three still seeds the verdict's three demo receipts so the match card remains coherent.
+- **Receipt/crash modals.** Receipts make the scene and mute `inert`, trap Tab, and restore focus; the crash card is a focused `role="alertdialog"`.
+
 ---
 
 ### Task 1: Core shell, stage, router, receipt component
