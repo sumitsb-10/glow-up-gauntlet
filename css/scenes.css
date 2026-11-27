@@ -877,7 +877,7 @@
    ========================================================================== */
 
 /* ---------- verdict: fit the extra honesty layer ---------- */
-.verdict { gap: 10px; padding: 16px 40px 12px; }
+.verdict { gap: 7px; padding: 12px 40px 4px; }
 .vd-head h2 { font-size: 35px; }
 .vd-strip { gap: 9px; }
 .vd-rec { padding: 10px 13px; }
@@ -1104,7 +1104,16 @@
   .consult-note { font-size: 14px; }
   .rec-cap { font-size: 13px; }
   .result-card .mstat { font-size: 12.5px; }
-  .file-name, .doc-hint, .doc-result, .ch3-hint { font-size: 16px; }
+  .file-name, .doc-hint, .doc-result, .ch3-hint { font-size: 17px; }
   .doc-result b { font-size: 14px; }
   .match-shot, .result-card .match-shot { font-size: 15px; }
+  /* verdict: absorb the readability bumps so the screen still fits 800px */
+  .verdict { gap: 5px; padding: 6px 40px 4px; }
+  .pc { padding: 10px 16px; }
+  .silicon { padding: 5px 12px; }
+  /* 1024 readability: HUD, task hint and file card text >= 12.5 effective px */
+  .lp-bar { font-size: 17px; }
+  .lp-note { font-size: 17px; }
+  .file { font-size: 17px; }
+  .file-ico { font-size: 17px; }
 }

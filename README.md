@@ -142,7 +142,7 @@ Recorded on Windows, headless Microsoft Edge, from `file://`, plus an HTTP-serve
 | Value sheet | 6 objections, `NO BENCHMARK CLAIMS`, fits 1024 and 1280; opens and closes cleanly |
 | Copy consistency | Sample report is labelled as a mock excerpt; exact CTA and promise strings were checked |
 | Touch targets | sampled controls incl. verdict CTA, primary CTA, objection and Explore Again ≥ 64 design px |
-| 1024 readability | HUD, file names and doc hint ≥ 12.5 effective px; no clipped verdict or recommendation content |
+| 1024 readability | `readability-1024`: HUD, task hint and file-card text ≥ 12.5 effective px (13.25 measured); `verdict-fit`: verdict screen fits its 800 px box at 1024 and 1280 — heading and CTA not clipped |
 | Idle + Restart | Restart returns from a challenge with cleared state; 1 ms test idle and an open receipt both return to attract with the modal gone |
 | Complete browser suite | 34/34 cases returned without failures; seven scene smoke checks passed |
 | Recommendation audit | arbitrary processor tiers removed; needs-specific CPU/GPU/app checks added; memory and storage values labelled starting points |
@@ -193,6 +193,10 @@ node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene
 node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=ai" --script scripts/tests/review-targets.js
 node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=verdict&phase=run" --script scripts/tests/review-tally.js
 node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=doc" --script scripts/tests/review-copy.js
+
+# 1024 fit and readability regressions
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=verdict&phase=run" --script scripts/tests/verdict-fit.js --w 1024 --h 768
+node scripts/e2e.mjs "file:///C:/Users/sumit/intel-ai-pc-arcade/index.html?scene=ch1&phase=ai" --script scripts/tests/readability-1024.js --w 1024 --h 768
 
 # headless smoke / screenshot helpers
 powershell -ExecutionPolicy Bypass -File scripts/smoke.ps1 -Scene ch1
