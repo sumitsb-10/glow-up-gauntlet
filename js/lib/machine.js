@@ -17,6 +17,10 @@
 
   function nextScene(current, action) {
     if (action === 'restart') return 'attract';
+    if (action === 'idle') {
+      if (SCENES.indexOf(current) === -1) return null;
+      return 'attract';
+    }
     if (SCENES.indexOf(current) === -1) return null;
     var to = TABLE[current + '|' + action];
     return to === undefined ? null : to;

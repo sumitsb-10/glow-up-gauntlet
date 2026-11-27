@@ -16,10 +16,16 @@ out.postDisabledAfterOne = q('.post-btn').disabled;
 chip('SERIF').click();
 await wait(160);
 chip('GRAINY').click();
+await wait(160);
+out.postDisabledWithoutOutput = q('.post-btn').disabled;
+chip('LOW POWER').click();
 await wait(300);
 out.postEnabledAfterAll = !q('.post-btn').disabled;
+out.outputLabel = q('.poster').getAttribute('aria-label');
+out.networkLabel = q('.wifi-badge').textContent.replace(/\s+/g, ' ').trim();
 out.placeholderAfterAll = q('.poster').classList.contains('placeholder');
 out.ok = out.initialPressed === 0 && out.postDisabled && out.placeholder &&
   out.afterOnePressed === 1 && out.postDisabledAfterOne &&
-  out.postEnabledAfterAll && !out.placeholderAfterAll;
+  out.postEnabledAfterAll && !out.placeholderAfterAll &&
+  /NO NETWORK CALLS/.test(out.networkLabel) && !/WI-FI\s*:\s*OFF/i.test(out.networkLabel);
 return out;

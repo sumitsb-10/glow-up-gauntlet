@@ -1,12 +1,19 @@
-/* Challenge 3 — 2AM Idea: offline, on-device generation */
+/* Challenge 3 — 2AM Idea: offline template composition with an output tradeoff */
 (function () {
   'use strict';
   var GG = window.GG;
 
+  var OUTPUTS = {
+    quality: { label: 'MAX QUALITY', short: 'QUALITY' },
+    fast: { label: 'FAST', short: 'FAST' },
+    eco: { label: 'LOW POWER', short: 'LOW POWER' }
+  };
+
   var GROUPS = [
     { key: 'vibe', label: 'VIBE', table: GG.poster.VIBES },
     { key: 'type', label: 'TYPE', table: GG.poster.TYPES },
-    { key: 'finish', label: 'FINISH', table: GG.poster.FINISHES }
+    { key: 'finish', label: 'FINISH', table: GG.poster.FINISHES },
+    { key: 'output', label: 'OUTPUT', table: OUTPUTS }
   ];
 
   var SPOTS = [
@@ -18,26 +25,27 @@
 
   GG.register('ch3', {
     mount: function (root) {
-      var state = { vibe: null, type: null, finish: null };
+      var state = { vibe: null, type: null, finish: null, output: null };
       var chipEls = {};
       var posted = false;
 
       var screen = GG.el('section', { class: 'screen ch3' });
-      var posterEl = GG.el('div', { class: 'poster', role: 'img', 'aria-label': 'Your generated poster' });
+      var posterEl = GG.el('div', { class: 'poster', role: 'img', 'aria-label': 'Your locally composed poster preview' });
 
       screen.append(
         GG.el('header', { class: 'ch3-head' },
-          GG.el('div', { class: 'eyebrow', text: 'STEP 4 OF 4 · THE WI-FI IS OFF' }),
-          GG.el('h2', { html: 'MAKE SOMETHING<br>AT 2AM.' }),
-          GG.el('p', { class: 'ch3-sub', text: 'Pick a vibe. The AI is inside this laptop — no signal needed.' })
+          GG.el('div', { class: 'eyebrow', text: 'THE LAST CHALLENGE · NO NETWORK NEEDED' }),
+          GG.el('h2', { html: 'MAKE SOMETHING <br>AT 2AM.' }),
+          GG.el('p', { class: 'ch3-sub', text: 'Pick a look and an output priority. This is a local template composer, not an AI model.' })
         ),
-        GG.el('div', { class: 'wifi-badge', html: '<span class="wifi-dot"></span> WI-FI: OFF' })
+        GG.el('div', { class: 'wifi-badge', html: '<span class="wifi-dot"></span> NO NETWORK CALLS' })
       );
 
       var body = GG.el('div', { class: 'ch3-body' });
       var posterWrap = GG.el('div', { class: 'poster-wrap' }, posterEl);
 
       var controls = GG.el('div', { class: 'ch3-controls' });
+      var progress = GG.el('p', { class: 'ch3-progress', role: 'status', 'aria-live': 'polite', text: '0 / 4 choices · build your poster' });
       function allChosen() {
         return GROUPS.every(function (g) { return !!state[g.key]; });
       }
@@ -48,6 +56,10 @@
             chipEls[g.key][key].setAttribute('aria-pressed', String(state[g.key] === key));
           });
         });
+        var count = GROUPS.filter(function (g) { return !!state[g.key]; }).length;
+        progress.textContent = count === GROUPS.length
+          ? '4 / 4 choices · your poster is ready'
+          : count + ' / 4 choices · choose the next style';
         postBtn.disabled = !allChosen();
       }
 
@@ -82,15 +94,16 @@
       var postBtn = GG.el('button', { class: 'btn post-btn', type: 'button', text: 'POST IT', disabled: 'disabled' });
       postBtn.addEventListener('click', post);
       controls.append(
+        progress,
         postBtn,
-        GG.el('p', { class: 'ch3-hint', text: 'Nothing leaves this laptop. That is the whole point.' })
+        GG.el('p', { class: 'ch3-hint', text: 'Each choice updates your preview. Style labels do not measure speed or power.' })
       );
 
       body.append(posterWrap, controls);
       screen.append(body);
       root.append(screen);
 
-      GG.skip(screen, function () { GG.nav('verdict', { action: 'next' }); });
+      GG.skip(screen, 'poster', function () { GG.nav('verdict', { action: 'next' }); });
       GG.hint(screen, function () {
         if (posted || document.querySelector('.receipt-card')) return null;
         for (var i = 0; i < GROUPS.length; i++) {
@@ -101,8 +114,8 @@
         return postBtn;
       });
 
-      /* cloud banner, then it dies */
-      var banner = GG.el('div', { class: 'cloud-banner', html: '<b>CLOUD AI:</b> UNAVAILABLE' });
+      /* local-mode banner, then it clears */
+      var banner = GG.el('div', { class: 'cloud-banner local', html: '<b>NO NETWORK:</b> LOCAL COMPOSER READY' });
       screen.append(banner);
       GG.timers.after(1500, function () { banner.classList.add('out'); });
       GG.timers.after(2100, function () { banner.remove(); });
@@ -125,15 +138,21 @@
 
         var p = GG.poster.composePoster(state);
         posterEl.classList.remove('placeholder');
+        posterEl.classList.toggle('mode-quality', state.output === 'quality');
+        posterEl.classList.toggle('mode-fast', state.output === 'fast');
+        posterEl.classList.toggle('mode-eco', state.output === 'eco');
+        posterEl.setAttribute('data-output', state.output);
         posterEl.setAttribute('aria-label',
           'Poster preview: ' + GG.poster.VIBES[p.vibe].label + ', ' +
-          GG.poster.TYPES[p.type].label + ', ' + GG.poster.FINISHES[p.finish].label);
+          GG.poster.TYPES[p.type].label + ', ' + GG.poster.FINISHES[p.finish].label + ', ' +
+          OUTPUTS[state.output].label + ' output');
         posterEl.style.background = p.bg;
         posterEl.style.color = p.ink;
         posterEl.replaceChildren();
 
         var blobs = GG.el('div', { class: 'p-blobs' });
-        blobs.style.opacity = String(p.blobOpacity);
+        blobs.style.opacity = String(state.output === 'quality' ? p.blobOpacity
+          : state.output === 'fast' ? p.blobOpacity * 0.8 : p.blobOpacity * 0.55);
         p.blobs.forEach(function (c, i) {
           var b = GG.el('span', { class: 'p-blob' });
           var s = SPOTS[i % SPOTS.length];
@@ -144,7 +163,9 @@
           b.style.height = s[2] + 'px';
           blobs.append(b);
         });
-        posterEl.append(blobs, GG.el('div', { class: 'p-grain', style: 'opacity:' + p.grain }));
+        var grain = state.output === 'quality' ? p.grain * 1.35
+          : state.output === 'fast' ? p.grain * 0.2 : p.grain * 0.12;
+        posterEl.append(blobs, GG.el('div', { class: 'p-grain', style: 'opacity:' + grain }));
 
         var head = GG.el('div', { class: 'p-headline', html: 'SIDE<br>HUSTLE' });
         head.style.fontFamily = p.fontFamily;
@@ -162,7 +183,8 @@
         posterEl.append(
           GG.el('div', { class: 'p-kicker', text: p.kicker }),
           head,
-          foot
+          foot,
+          GG.el('div', { class: 'p-mode', text: OUTPUTS[state.output].short })
         );
 
         p.stickers.forEach(function (sym, i) {
@@ -191,17 +213,20 @@
         posterEl.classList.add('fly');
         confetti();
 
+        GG.state.choices.poster = state.output;
         GG.state.results.push({
           id: 'poster',
-          line: 'WI-FI: OFF · GENERATED ON-DEVICE · NOTHING UPLOADED',
-          claim: 'The AI is inside the laptop.'
+          line: 'LOCAL TEMPLATE COMPOSER · NO NETWORK CALLS',
+          claim: 'Composed on this laptop. No AI model.'
         });
 
         GG.timers.after(760, function () {
           GG.receipt(root, {
-            lines: ['WI-FI: OFF THE WHOLE TIME', 'GENERATED ON THIS LAPTOP · NOTHING UPLOADED'],
-            headline: 'The AI is inside the laptop.',
-            body: 'Not in a data centre. Not on a subscription.',
+            stamp: 'LOCAL TEMPLATE ENGINE · NO CLOUD',
+            lines: ['NO NETWORK CALLS MADE', 'OUTPUT PRIORITY: ' + OUTPUTS[state.output].label, 'NOTHING UPLOADED'],
+            headline: 'Made on this laptop.',
+            body: 'This is a deterministic template composer, not AI inference. The demo made no network calls; it does not change your device Wi-Fi setting.',
+            nextLabel: 'SEE YOUR RECEIPTS',
             next: function () { GG.nav('verdict', { action: 'next' }); }
           });
         });
@@ -234,6 +259,7 @@
         state.vibe = 'neon';
         state.type = 'blocky';
         state.finish = 'maximal';
+        state.output = 'quality';
         syncChips();
         renderPoster(false);
         GG.timers.after(300, post);

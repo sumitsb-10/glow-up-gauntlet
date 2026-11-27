@@ -1,4 +1,5 @@
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+const started = Date.now();
 const q = (s) => document.querySelector(s);
 const scene = () => document.documentElement.dataset.scene;
 const out = { steps: [] };
@@ -63,7 +64,7 @@ step('ch2-receipt', { receipt: !!q('.receipt-card'), results: window.GG.state.re
 
 q('.receipt-actions .btn').click();
 await wait(900);
-step('ch3');
+step('ch3', { networkLabel: q('.wifi-badge').textContent.replace(/\s+/g, ' ').trim() });
 
 const chip = (t) => Array.from(document.querySelectorAll('.vibe-chip')).find((c) => c.textContent.includes(t));
 chip('Y2K').click();
@@ -71,6 +72,8 @@ await wait(200);
 chip('SERIF').click();
 await wait(200);
 chip('GRAINY').click();
+await wait(200);
+chip('LOW POWER').click();
 await wait(400);
 q('.post-btn').click();
 await wait(1100);
@@ -85,14 +88,29 @@ await wait(1700);
 step('verdict-run', { cta: q('.vd-cta').textContent });
 
 q('.vd-cta').click();
-await wait(1000);
-step('match');
+await wait(900);
+step('match-use');
+
+q('.consult-card[data-key="study"]').click();
+await wait(450);
+step('match-priority');
+q('.consult-card[data-key="battery"]').click();
+await wait(700);
+step('match-result');
 
 out.results = window.GG.state.results.map((r) => r.id);
+out.skipped = window.GG.state.skipped.slice();
+out.choices = Object.assign({}, window.GG.state.choices);
 out.matchTitle = q('.match-title') && q('.match-title').textContent;
+out.matchCategory = q('.rec-cat') && q('.rec-cat').textContent;
+out.matchPromise = q('.match-promise') && q('.match-promise').textContent;
+out.primaryCta = q('.rec-primary') && q('.rec-primary').textContent;
 out.stats = Array.from(document.querySelectorAll('.mstat')).map((s) => s.textContent.trim());
 out.spec = q('.match-spec') && q('.match-spec').textContent;
-out.wifiBadge = true;
+out.compareNote = q('.rec-compare') && q('.rec-compare').textContent;
+out.runBadges = Array.from(document.querySelectorAll('.run-badge')).map((b) => b.textContent.trim());
+out.elapsedMs = Date.now() - started;
+out.networkCallsLabel = out.stats.some((s) => /no network calls/i.test(s));
 
 const stageRect = q('#stage').getBoundingClientRect();
 out.viewport = [window.innerWidth, window.innerHeight];
@@ -100,4 +118,10 @@ out.stage = [Math.round(stageRect.left), Math.round(stageRect.top), Math.round(s
 out.scroll = [document.documentElement.scrollWidth, document.documentElement.scrollHeight];
 out.stageFits = stageRect.left >= -1 && stageRect.top >= -1 &&
   stageRect.right <= window.innerWidth + 1 && stageRect.bottom <= window.innerHeight + 1;
+out.ok = out.results.length === 3 && out.skipped.length === 0 &&
+  out.matchTitle === 'THE STUDENT' && out.matchCategory === 'Study & research AI PC' &&
+  out.primaryCta === 'TRY YOUR INTEL AI PC AT THE COUNTER' &&
+  /verify the exact model and NPU/i.test(out.spec) && out.networkCallsLabel && out.stageFits &&
+  document.documentElement.scrollWidth <= window.innerWidth &&
+  document.documentElement.scrollHeight <= window.innerHeight;
 return out;

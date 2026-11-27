@@ -1,4 +1,4 @@
-/* Challenge 1 — The Deadline: felt input lag, then on-device search */
+/* Challenge 1 — The Deadline: felt input lag, then honest local retrieval */
 (function () {
   'use strict';
   var GG = window.GG;
@@ -29,9 +29,9 @@
   ];
 
   var QA = [
-    { q: "What's the main argument?", i: 1 },
-    { q: 'How many sources?', i: 3 },
-    { q: 'Word count?', i: 5 }
+    { q: "What's the main argument?" },
+    { q: 'How many sources?' },
+    { q: 'Word count?' }
   ];
 
   GG.register('ch1', {
@@ -49,7 +49,7 @@
       screen.append(lp);
       root.append(screen);
 
-      GG.skip(screen, function () { GG.nav('ch2', { action: 'next' }); });
+      GG.skip(screen, 'deadline', function () { GG.nav('ch2', { action: 'next' }); });
       GG.hint(screen, function () {
         if (document.querySelector('.receipt-card')) return null;
         if (screen.classList.contains('crashed')) return rescue;
@@ -63,6 +63,7 @@
 
       var phase = 'lag';
       var taps = 0;
+      var taskNoteEl = null;
       var lagIds = [];
       var rescue = null;
       var fan = null;
@@ -76,11 +77,18 @@
       }
 
       function banner() {
+        taskNoteEl = GG.el('p', { class: 'lp-note', text: phase === 'lag'
+          ? 'Tap any file twice to feel the simulated lag. No timer.'
+          : 'Choose the assignment keyword to narrow the sample files.' });
         return GG.el('div', { class: 'lp-task' },
           GG.el('div', { class: 'eyebrow', text: 'YOUR TASK' }),
-          GG.el('h3', { text: 'Find the assignment. Submit it.' }),
-          GG.el('p', { class: 'lp-note', text: 'You have 30 seconds. Good luck.' })
+          GG.el('h3', { text: 'Search this sample assignment.' }),
+          taskNoteEl
         );
+      }
+
+      function setTaskNote(text) {
+        if (taskNoteEl) taskNoteEl.textContent = text;
       }
 
       function fileGrid() {
@@ -126,6 +134,7 @@
 
       function lagTap(el, ev) {
         taps += 1;
+        setTaskNote('Click ' + taps + ' / 2 arrived late. Tap again to see the simulated stall.');
         var b = body.getBoundingClientRect();
         var r = el.getBoundingClientRect();
         var s = stageScale();
@@ -145,6 +154,7 @@
       function breakdown() {
         if (phase !== 'lag' || screen.classList.contains('crashed')) return;
         screen.classList.add('crashed');
+        setTaskNote('The staged laptop scenario has stalled. Choose the recovery path to continue.');
         barTitle.textContent = 'Assignment_FINAL_v7.pdf — (Not responding)';
         if (fan) { fan.classList.add('loud'); fan.querySelector('.fan-v').textContent = 'LOUD'; }
         var crash = GG.el('div', {
@@ -186,6 +196,7 @@
         GG.audio.whoosh();
         screen.classList.remove('crashed');
         screen.classList.add('ai');
+        setTaskNote('Recovery complete. Search the bundled assignment sample.');
         barTitle.textContent = 'Assignment_FINAL_v7.pdf — Intel AI PC';
         if (rescue) { rescue.remove(); rescue = null; }
         renderSearch();
@@ -209,8 +220,8 @@
           chips.append(c);
         });
         search.append(
-          GG.el('span', { class: 'ai-badge', text: 'AI' }),
-          GG.el('span', { class: 'ai-q', text: 'Ask this laptop:' }),
+          GG.el('span', { class: 'ai-badge', text: 'LOCAL' }),
+          GG.el('span', { class: 'ai-q', text: 'Search this laptop:' }),
           chips
         );
 
@@ -223,6 +234,7 @@
         if (search.classList.contains('done')) return;
         search.classList.add('done');
         searched = true;
+        setTaskNote('Two assignment files found. Choose the FINAL_v7 draft.');
         GG.audio.whoosh();
         var grid = body.querySelector('.file-grid');
         Array.prototype.slice.call(grid.children).forEach(function (el) {
@@ -240,6 +252,7 @@
 
       function pickFile(f, el) {
         if (!f.target) {
+          setTaskNote('That is an older draft. Choose Assignment_FINAL_v7.pdf.');
           GG.audio.thud();
           el.classList.add('nudge');
           GG.timers.after(400, function () { el.classList.remove('nudge'); });
@@ -254,24 +267,36 @@
         GG.audio.pop();
         var page = GG.el('div', { class: 'doc-page' });
         page.append(GG.el('h4', { text: 'MKTG 201 — FINAL REPORT' }));
-        page.append(GG.el('div', { class: 'doc-meta', text: 'Submitted by you · 40 pages · draft 7' }));
+        page.append(GG.el('div', { class: 'doc-meta', text: 'DEMO SAMPLE · 40-page mock report · excerpt' }));
         PARA.forEach(function (text, i) {
           var p = GG.el('p', { class: 'para', 'data-i': String(i), text: text });
           page.append(p);
         });
-        page.append(GG.el('div', { class: 'doc-foot', text: 'page 12 of 40' }));
+        page.append(GG.el('div', { class: 'doc-foot', text: 'sample excerpt · page 12 of 40' }));
 
         var ask = GG.el('div', { class: 'doc-ask' });
-        ask.append(GG.el('div', { class: 'ai-badge', text: 'ASK THIS LAPTOP' }));
+        ask.append(GG.el('div', { class: 'ai-badge', text: 'LOCAL SEARCH' }));
         var submit = GG.el('button', { class: 'btn submit', type: 'button', text: 'SUBMIT', disabled: 'disabled' });
-        var hint = GG.el('p', { class: 'doc-hint', role: 'status', 'aria-live': 'polite', text: 'Tap a question. It reads all 40 pages locally.' });
+        var hint = GG.el('p', { class: 'doc-hint', role: 'status', 'aria-live': 'polite', text: 'Tap a question. Keyword match in the visible sample passages — no model.' });
+        var result = GG.el('div', { class: 'doc-result', role: 'status', 'aria-live': 'polite' });
 
         QA.forEach(function (item) {
           var c = GG.el('button', { class: 'chip q', type: 'button', text: item.q });
           c.addEventListener('click', function () {
             GG.audio.pop();
             page.querySelectorAll('.para').forEach(function (p) { p.classList.remove('found'); });
-            var target = page.querySelector('[data-i="' + item.i + '"]');
+            var hit = GG.retrieval.search(PARA, item.q);
+            if (hit.index < 0) {
+              result.replaceChildren(
+                GG.el('b', { text: 'NO LOCAL MATCH' }),
+                GG.el('span', { text: 'This demo only finds words that are in the document.' })
+              );
+              hint.textContent = 'No local match. Try another question.';
+              submit.disabled = true;
+              answered = false;
+              return;
+            }
+            var target = page.querySelector('[data-i="' + hit.index + '"]');
             if (target) {
               target.classList.add('found');
               var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -279,14 +304,19 @@
             }
             answered = true;
             submit.disabled = false;
-            hint.textContent = 'Found instantly · on this laptop · nothing uploaded';
+            hint.textContent = 'Sample-text keyword match · no model · no file access';
+            result.replaceChildren(
+              GG.el('b', { text: 'LOCAL KEYWORD MATCH' }),
+              GG.el('span', { text: 'Matched: ' + hit.terms.join(', ') + ' · sample passage ' + (hit.index + 1) }),
+              GG.el('blockquote', { class: 'doc-excerpt', text: hit.snippet })
+            );
             ask.querySelectorAll('.chip').forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
             c.setAttribute('aria-pressed', 'true');
           });
           ask.append(c);
         });
 
-        ask.append(hint, submit);
+        ask.append(result, hint, submit);
 
         var submitted = false;
         submit.addEventListener('click', function () {
@@ -296,16 +326,19 @@
           GG.audio.chime();
           GG.state.results.push({
             id: 'deadline',
-            line: 'READ ON THIS LAPTOP · WI-FI OFF · NOTHING UPLOADED',
-            claim: 'This is the NPU.'
+            line: 'BUNDLED SAMPLE SEARCHED LOCALLY · NO NETWORK CALLS',
+            claim: 'Matched sample text; this demo did not access your files.'
           });
+          GG.state.choices.deadline = 'local-retrieval';
           var flash = GG.el('div', { class: 'flash' });
           screen.append(flash);
           GG.timers.after(260, function () {
             GG.receipt(root, {
-              lines: ['40-PAGE PDF · READ ON THIS LAPTOP', 'WI-FI OFF · NOTHING UPLOADED'],
-              headline: 'This is the NPU.',
-              body: 'AI that runs on the machine, not on a server.',
+              stamp: 'SAMPLE TEXT SEARCH · NO CLOUD',
+              lines: ['KEYWORD MATCH IN BUNDLED SAMPLE TEXT', 'NO MODEL · NO FILE ACCESS · NO NETWORK CALLS'],
+              headline: 'Found a match in the sample.',
+              body: 'This demo matches keywords against the visible sample passages. It does not read a real 40-page file or access your documents.',
+              nextLabel: 'NEXT CHALLENGE',
               next: function () { GG.nav('ch2', { action: 'next' }); }
             });
           });

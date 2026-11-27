@@ -4,7 +4,7 @@
 An in-store, touch-first game that turns "why an AI PC?" into "I want that one."
 
 Date: 2026-11-25
-Status: built (2026-11-25) — run instructions and QA results in `README.md`
+Status: historical design document. The 2026-11-26 credibility pass superseded its generative-AI framing, Wi-Fi-off assertions, seeded receipts, generic match spec and “cannot run AI” comparison. Do not use the original claims below as product facts. Current behavior, claim limits, run instructions and QA results are in `README.md`.
 
 ---
 

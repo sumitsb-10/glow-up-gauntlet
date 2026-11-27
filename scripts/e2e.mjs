@@ -108,7 +108,12 @@ try {
     console.error('JS ERROR:', JSON.stringify(r.exceptionDetails, null, 2));
     process.exitCode = 1;
   } else {
-    console.log(JSON.stringify(r.result.value, null, 2));
+    const value = r.result.value;
+    console.log(JSON.stringify(value, null, 2));
+    if (value && typeof value === 'object' && value.ok === false) {
+      console.error('TEST FAILED: script returned { ok: false }');
+      process.exitCode = 1;
+    }
   }
 
   if (shotAfter) {

@@ -7,5 +7,5 @@ const foot = q('.doc-foot').textContent;
 return {
   meta,
   foot,
-  ok: /40 pages/.test(meta) && !/22 pages/.test(meta) && /page 12 of 40/.test(foot)
+  ok: /40[- ]pages?/.test(meta) && !/22[- ]pages?/.test(meta) && /page 12 of 40/.test(foot)
 };

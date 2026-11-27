@@ -39,4 +39,5 @@ post.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerType: '
 post.click();
 await wait(1500);
 out.receipt = !!q('.receipt-card');
+out.ok = out.afterDrag === '90' && out.afterTap === '160' && out.receipt;
 return out;

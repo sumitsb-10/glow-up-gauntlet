@@ -22,8 +22,6 @@ test('restart returns to attract from anywhere', () => {
   for (const s of machine.SCENES) assert.strictEqual(machine.nextScene(s, 'restart'), 'attract');
 });
 
-test('idle only resets from attract and match', () => {
-  assert.strictEqual(machine.nextScene('attract', 'idle'), 'attract');
-  assert.strictEqual(machine.nextScene('match', 'idle'), 'attract');
-  assert.strictEqual(machine.nextScene('ch2', 'idle'), null);
+test('idle resets every scene to attract', () => {
+  for (const s of machine.SCENES) assert.strictEqual(machine.nextScene(s, 'idle'), 'attract');
 });

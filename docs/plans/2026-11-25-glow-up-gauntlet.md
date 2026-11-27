@@ -1,10 +1,12 @@
 # Glow-Up Gauntlet — Implementation Plan
 
+> **Historical plan, superseded (2026-11-26).** Do not use the task steps or copy below as current requirements: they include unimplemented generative-AI framing, Wi-Fi-off assertions, seeded skipped receipts, and unsupported product comparisons. Current behavior, claim limits, recommendation guidance and QA status are maintained in `README.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Build a self-contained, offline, touch-first browser game that makes a Gen-Z shopper feel the difference an Intel AI PC makes, in ~2:30, and hands them a personalized match card.
 
-**Architecture:** Vanilla HTML/CSS/JS, classic `<script>` tags (no ES modules — `file://` blocks them), no build step, no dependencies, no network calls. A single state machine routes between full-screen scenes; each scene is a self-registering object with `mount(root)` / `unmount()`. Pure logic (routing, poster composition, match copy) lives in UMD-style modules so `node --test` can exercise it without a DOM. All art is inline SVG generated in JS.
+**Current architecture note:** Vanilla HTML/CSS/JS, classic `<script>` tags, no build step, no runtime dependencies. UI artwork is inline SVG; the photo editor's demo photo and pre-authored mask previews are bundled in `assets/`. The app is intended to run from `file://` with no app network requests. Historical implementation steps below are superseded; see `README.md` for current behavior and claims.
 
 **Tech Stack:** HTML, CSS, vanilla ES2020, WebAudio, `node:test` for logic tests, headless Edge for smoke checks.
 

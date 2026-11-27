@@ -65,7 +65,7 @@ check('bomberKeyboardable', hit.getAttribute('tabindex') === '0' && hit.getAttri
 hit.focus();
 hit.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
 await wait(250);
-check('keyboardSelectShowsChips', document.querySelectorAll('.ed-actions .chip').length === 3);
+check('keyboardSelectShowsChips', document.querySelectorAll('.ed-actions .chip').length === 2);
 check('focusMovesToChips', document.activeElement === q('.ed-actions .chip'));
 q('.ed-actions .chip').click();
 await wait(1200);
@@ -84,9 +84,9 @@ check('ch2Receipt', !!q('.receipt-card'));
 q('.receipt-actions .btn').click();
 await wait(900);
 
-// ch3: starts neutral, one pressed chip per group after picking, POST gated until all three
+// ch3: starts neutral, one pressed chip per group after picking, POST gated until all four
 const groups = Array.from(document.querySelectorAll('.ctl-group'));
-check('startsUnpicked', groups.length === 3 && groups.every((g) => g.querySelectorAll('[aria-pressed="true"]').length === 0));
+check('startsUnpicked', groups.length === 4 && groups.every((g) => g.querySelectorAll('[aria-pressed="true"]').length === 0));
 check('postGated', q('.post-btn').disabled);
 const before = q('.poster').getAttribute('aria-label');
 const chipFor = (t) => Array.from(document.querySelectorAll('.vibe-chip')).find((c) => c.textContent.includes(t));
@@ -100,6 +100,8 @@ check('postStillGated', q('.post-btn').disabled);
 chipFor('SERIF').click();
 await wait(200);
 chipFor('GRAINY').click();
+await wait(200);
+chipFor('LOW POWER').click();
 await wait(300);
 check('postEnabled', !q('.post-btn').disabled);
 q('.post-btn').click();
@@ -110,20 +112,27 @@ await wait(900);
 // verdict: state change is visible, not colour-only
 q('.vd-cta').click();
 await wait(1600);
-check('verdictStrikethrough', getComputedStyle(q('.pc.pretty .ab-t')).textDecorationLine === 'line-through');
-check('verdictCrossShown', getComputedStyle(q('.pc.pretty .ab-no')).display !== 'none');
-check('verdictTickShown', getComputedStyle(q('.pc.intel .ab-yes')).display !== 'none');
+check('verdictNoStrikethrough', getComputedStyle(q('.pc.pretty .ab-t')).textDecorationLine === 'none');
+check('verdictLimitShown', getComputedStyle(q('.pc.pretty .ab-lim')).display !== 'none');
+check('verdictIntelLit', !!q('.pc.intel .ability.live') &&
+  getComputedStyle(q('.pc.intel .ability.live .ab-lim')).display !== 'none');
 q('.vd-cta').click();
 await wait(900);
 check('matchReached', scene() === 'match');
-check('matchStats', Array.from(document.querySelectorAll('.mstat')).map((s) => s.textContent.trim()).join(' | '));
+q('.consult-card[data-key="study"]').click();
+await wait(450);
+q('.consult-card[data-key="battery"]').click();
+await wait(650);
+check('matchStats', Array.from(document.querySelectorAll('.mstat')).some((s) => /No network calls/i.test(s.textContent)));
 
 const again = q('.match .btn.ghost');
 check('playAgainIsButton', again.tagName === 'BUTTON');
 again.click();
 await wait(800);
 check('resetToAttract', scene() === 'attract');
-check('stateReset', window.GG.state.results.length === 0 && window.GG.state.vibe === null);
+check('stateReset', window.GG.state.results.length === 0 && window.GG.state.vibe === null &&
+  window.GG.state.skipped.length === 0 && Object.keys(window.GG.state.choices).length === 0);
 
 out.errors = errors;
+out.ok = Object.values(out.checks).every(Boolean) && out.errors.length === 0;
 return out;

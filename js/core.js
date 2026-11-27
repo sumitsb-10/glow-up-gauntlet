@@ -4,7 +4,7 @@
 
   var GG = (window.GG = window.GG || {});
 
-  GG.state = { vibe: null, results: [] };
+  GG.state = { vibe: null, results: [], skipped: [], choices: {} };
   GG.SCENES = {};
   GG.current = null;
 
@@ -90,7 +90,8 @@
   };
 
   /* a persistent, low-emphasis escape from any challenge */
-  GG.skip = function (screen, onSkip) {
+  GG.skip = function (screen, id, onSkip) {
+    if (typeof id === 'function') { onSkip = id; id = null; }
     var btn = GG.el('button', {
       class: 'skip', type: 'button', text: 'SKIP THIS ONE',
       'aria-label': 'Skip this challenge'
@@ -98,6 +99,7 @@
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       GG.audio.tap();
+      if (id) GG.markSkipped(id);
       onSkip();
     });
     screen.append(btn);
@@ -145,7 +147,19 @@
 
   /* ---------- router ---------- */
   GG.register = function (name, scene) { GG.SCENES[name] = scene; };
-  GG.reset = function () { GG.state.vibe = null; GG.state.results.length = 0; };
+  GG.reset = function () {
+    GG.state.vibe = null;
+    GG.state.results.length = 0;
+    GG.state.skipped.length = 0;
+    GG.state.choices = {};
+  };
+  GG.hasResult = function (id) {
+    return GG.state.results.some(function (r) { return r.id === id; });
+  };
+  GG.markSkipped = function (id) {
+    if (!id || GG.hasResult(id) || GG.state.skipped.indexOf(id) !== -1) return;
+    GG.state.skipped.push(id);
+  };
 
   GG.go = function (name, opts) {
     if (busy) return false;
@@ -182,6 +196,9 @@
       document.documentElement.dataset.scene = name;
       try { scene.mount(root, opts || {}); } catch (e) { console.error('[GG] mount', name, e); }
       GG.raf(function () { root.classList.add('in'); });
+      try {
+        document.dispatchEvent(new CustomEvent('gg:scene', { detail: { scene: name } }));
+      } catch (e) {}
       setTimeout(function () { busy = false; }, 240);
     }
 
@@ -285,14 +302,21 @@
   /* ---------- receipt ---------- */
   GG.receipt = function (root, data) {
     var opener = document.activeElement;
-    var card = GG.el('div', { class: 'receipt-card', role: 'dialog', 'aria-modal': 'true', 'aria-label': 'AI PC receipt' });
+    var card = GG.el('div', {
+      class: 'receipt-card' + (data.variant ? ' ' + data.variant : ''),
+      role: 'dialog',
+      'aria-modal': 'true',
+      'aria-label': 'AI PC receipt'
+    });
     var overlay = GG.el('section', { class: 'receipt-scene' }, card);
     var siblings = Array.prototype.slice.call(root.children);
     var mute = document.getElementById('mute');
+    var home = document.getElementById('home');
 
     function release() {
       siblings.forEach(function (el) { el.inert = false; });
       if (mute) mute.inert = false;
+      if (home) home.inert = false;
       card.removeEventListener('keydown', trap);
       try { if (opener && opener.focus) opener.focus({ preventScroll: true }); } catch (e) {}
     }
@@ -313,7 +337,7 @@
       }
     }
 
-    card.append(GG.el('div', { class: 'receipt-stamp', text: 'AI PC RECEIPT · NO CLOUD INVOLVED' }));
+    card.append(GG.el('div', { class: 'receipt-stamp', text: data.stamp || 'AI PC RECEIPT · NO CLOUD INVOLVED' }));
 
     var lines = GG.el('div', { class: 'receipt-lines' });
     (data.lines || []).forEach(function (line) {
@@ -330,12 +354,17 @@
       if (modalRelease === release) modalRelease = null;
       release();
       if (typeof data.next === 'function') data.next();
+      /* navigations clear the scene root; standalone sheets remove themselves */
+      setTimeout(function () {
+        if (overlay.isConnected) overlay.remove();
+      }, 260);
     });
     card.append(GG.el('div', { class: 'receipt-actions' }, btn));
 
     card.addEventListener('keydown', trap);
     siblings.forEach(function (el) { el.inert = true; });
     if (mute) mute.inert = true;
+    if (home) home.inert = true;
     modalRelease = release;
     root.append(overlay);
     GG.audio.chime();

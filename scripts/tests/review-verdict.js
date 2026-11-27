@@ -4,6 +4,11 @@ const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 await wait(500);
 const cta = q('.vd-cta');
+const copy = {
+  compare: q('.compare-note') && q('.compare-note').textContent,
+  silicon: q('.silicon') && q('.silicon').textContent.replace(/\s+/g, ' ').trim(),
+  pfNote: q('.pc.pretty .pf-note') && q('.pc.pretty .pf-note').textContent
+};
 cta.click();
 
 if (reduce) {
@@ -12,9 +17,13 @@ if (reduce) {
     reduce: true,
     tallyShown: !!q('.vd-tally.show'),
     ctaEnabled: !cta.disabled,
-    ctaText: cta.textContent
+    ctaText: cta.textContent,
+    copy
   };
-  out.ok = out.tallyShown && out.ctaEnabled && out.ctaText === 'SEE YOUR MATCH';
+  out.ok = out.tallyShown && out.ctaEnabled && out.ctaText === 'BUILD MY MATCH' &&
+    /AMD Ryzen AI/.test(out.copy.compare) && /Qualcomm Snapdragon X/.test(out.copy.compare) &&
+    /CPU/.test(out.copy.silicon) && /GPU/.test(out.copy.silicon) && /NPU/.test(out.copy.silicon) &&
+    /not required/i.test(out.copy.silicon) && /illustrative/i.test(out.copy.pfNote);
   return out;
 }
 
@@ -39,11 +48,15 @@ const out = {
   tallyShown: !!q('.vd-tally.show'),
   tallyText: q('.vd-tally') && q('.vd-tally').textContent.replace(/\s+/g, ' ').trim(),
   ctaEnabled: !cta.disabled,
-  ctaText: cta.textContent
+  ctaText: cta.textContent,
+  copy
 };
 out.ok = out.early.firstFlipAt300 >= 1 && out.early.firstFlipAt300 < 3 &&
   out.early.ctaDisabledDuring && !out.early.tallyShownDuring &&
   out.prettyFlipped === 3 && out.intelFlashed === 3 && out.intelVisible &&
-  out.tallyShown && /3 receipts/.test(out.tallyText) &&
-  out.ctaEnabled && out.ctaText === 'SEE YOUR MATCH';
+  out.tallyShown && /0 receipts/.test(out.tallyText) && /0 skipped/.test(out.tallyText) &&
+  out.ctaEnabled && out.ctaText === 'BUILD MY MATCH' &&
+  /AMD Ryzen AI/.test(out.copy.compare) && /Qualcomm Snapdragon X/.test(out.copy.compare) &&
+  /CPU/.test(out.copy.silicon) && /GPU/.test(out.copy.silicon) && /NPU/.test(out.copy.silicon) &&
+  /not required/i.test(out.copy.silicon) && /illustrative/i.test(out.copy.pfNote);
 return out;

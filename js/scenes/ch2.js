@@ -1,4 +1,4 @@
-/* Challenge 2 — The Photobomber: on-device generative fill */
+/* Challenge 2 — The Photobomber: a real choice, honestly labelled SVG edit */
 (function () {
   'use strict';
   var GG = window.GG;
@@ -6,6 +6,7 @@
   GG.register('ch2', {
     mount: function (root) {
       var step = 'gag';
+      var choice = null;
       var reveal = 0;
       var dragging = false;
       var startX = 0;
@@ -35,7 +36,7 @@
       screen.append(ed);
       root.append(screen);
 
-      GG.skip(screen, function () { GG.nav('ch3', { action: 'next' }); });
+      GG.skip(screen, 'photo', function () { GG.nav('ch3', { action: 'next' }); });
       GG.hint(screen, function () {
         if (document.querySelector('.receipt-card')) return null;
         if (step === 'gag') return bottom.querySelector('.ed-actions .btn');
@@ -122,40 +123,52 @@
         var rescue = screen.querySelector('.rescue');
         if (rescue) rescue.remove();
         photo.classList.add('ready');
-        setBottom('He was not invited.', 'Tap the guy who showed up anyway.', []);
+        setBottom('He was not invited.', 'Tap the person to mask them, or keep the original.', []);
       }
 
       function selectBomber() {
         if (step !== 'remove') return;
         photo.classList.add('selected');
         GG.audio.pop();
-        var chips = ['Remove', 'Erase', 'Fix'].map(function (label) {
-          var c = GG.el('button', { class: 'chip', type: 'button', text: label });
-          c.addEventListener('click', removeBomber);
+        var chips = [
+          { label: 'MASK THE PERSON', mode: 'remove' },
+          { label: 'KEEP ORIGINAL', mode: 'keep' }
+        ].map(function (item) {
+          var c = GG.el('button', { class: 'chip', type: 'button', text: item.label });
+          c.addEventListener('click', function () { chooseEdit(item.mode); });
           return c;
         });
-        setBottom('He was not invited.', 'Pick any. They all do the same thing.', chips);
+        setBottom('Your call.', 'Apply the illustrative mask preview, or keep the original moment.', chips);
         GG.timers.after(40, function () { try { chips[0].focus({ preventScroll: true }); } catch (e) {} });
       }
 
-      function removeBomber() {
-        if (step !== 'remove') return;
+      function chooseEdit(mode) {
+        if (step !== 'remove' || (mode !== 'remove' && mode !== 'keep')) return;
+        choice = mode;
         step = 'removing';
         photo.classList.remove('selected');
-        photo.classList.add('removed');
-        GG.audio.whoosh();
 
-        var brush = GG.el('div', { class: 'brush', style: 'left:302px;top:136px' });
-        photoWrap.append(brush);
-        GG.timers.after(620, function () { brush.remove(); });
+        if (mode === 'remove') {
+          photo.classList.add('removed');
+          GG.audio.whoosh();
+          var brush = GG.el('div', { class: 'brush', style: 'left:302px;top:136px' });
+          photoWrap.append(brush);
+          GG.timers.after(620, function () { brush.remove(); });
+        } else {
+          GG.audio.pop();
+          photo.classList.add('kept');
+          setReveal(200);
+        }
 
         GG.timers.after(700, function () {
           step = 'extend';
-          handle.classList.remove('hidden');
-          setBottom('Now make it fit the feed.', 'Drag the right edge. Or just tap it.', [
-            postButton()
-          ]);
-          GG.timers.after(400, function () { handle.focus({ preventScroll: true }); });
+          if (mode === 'remove') {
+            handle.classList.remove('hidden');
+            setBottom('Mask applied.', 'This local blur mask is illustrative—not AI photo removal.', [postButton()]);
+            GG.timers.after(400, function () { handle.focus({ preventScroll: true }); });
+          } else {
+            setBottom('You kept the moment.', 'No edit applied. The bundled demo photo stayed local.', [postButton()]);
+          }
         });
       }
 
@@ -174,16 +187,26 @@
         if (step === 'done') return;
         step = 'done';
         GG.audio.chime();
+        var removed = choice === 'remove';
+        GG.state.choices.photo = removed ? 'remove' : 'keep';
         GG.state.results.push({
           id: 'photo',
-          line: 'GENERATIVE FILL · ON-DEVICE · NOTHING UPLOADED',
-          claim: 'Your photos never left this laptop.'
+          line: removed
+            ? 'LOCAL PHOTO MASK · ILLUSTRATIVE · NOTHING UPLOADED'
+            : 'ORIGINAL KEPT · NO EDIT · NOTHING UPLOADED',
+          claim: removed ? 'Local blur preview displayed. No image uploaded or model run.' : 'Bundled demo photo kept. No image uploaded or model run.'
         });
         GG.timers.after(320, function () {
           GG.receipt(root, {
-            lines: ['GENERATIVE FILL · ON-DEVICE', 'NO UPLOAD · NO ACCOUNT · NOTHING LEFT THE MACHINE'],
-            headline: 'Your photos never left this laptop.',
-            body: 'No upload, no sign-in, no "processing…".',
+            stamp: removed ? 'LOCAL PHOTO MASK · ILLUSTRATIVE' : 'ORIGINAL KEPT · NO EDIT',
+            lines: removed
+              ? ['PRE-AUTHORED BLUR PREVIEW · NOT AI REMOVAL', 'BUNDLED DEMO IMAGE · NO UPLOAD · NO MODEL']
+              : ['BUNDLED DEMO PHOTO KEPT', 'NO UPLOAD · NO ACCOUNT · NO MODEL'],
+            headline: removed ? 'Local preview displayed.' : 'The demo photo stayed original.',
+            body: removed
+              ? 'This demo switches to a pre-authored, locally bundled blur-mask preview. It does not edit the photo with AI. No image is uploaded or model run.'
+              : 'You chose the unedited, locally bundled demo photo. No image is uploaded or model run.',
+            nextLabel: 'NEXT CHALLENGE',
             next: function () { GG.nav('ch3', { action: 'next' }); }
           });
         });
@@ -270,7 +293,7 @@
         step = 'rescue';
         goAI();
         selectBomber();
-        removeBomber();
+        chooseEdit('remove');
         if (want === 'done') {
           GG.timers.after(900, function () { extendTo(200); });
         }

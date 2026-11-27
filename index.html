@@ -11,10 +11,13 @@
 <body>
   <div id="stage">
     <div id="scene"></div>
+    <button id="home" class="home" type="button" aria-label="Restart the demo" hidden>
+      <span class="home-icon" aria-hidden="true">↻</span><span>Restart</span>
+    </button>
     <button id="mute" class="mute" type="button" aria-pressed="true" aria-label="Sound is off. Turn sound on.">
       <span class="mute-dot" aria-hidden="true"></span><span class="mute-label">Sound off</span>
     </button>
-    <div id="legal">Concept demo · illustrative. Not a product claim.</div>
+    <div id="legal">Concept demo · illustrative simulations, not product claims.</div>
   </div>
   <div id="rotate" aria-hidden="true"><span>↻</span><br />Turn your screen sideways</div>
 
@@ -23,6 +26,8 @@
   <script src="js/art.js"></script>
   <script src="js/lib/poster.js"></script>
   <script src="js/lib/match.js"></script>
+  <script src="js/lib/retrieval.js"></script>
+  <script src="js/lib/consult.js"></script>
   <script src="js/scenes/attract.js"></script>
   <script src="js/scenes/intro.js"></script>
   <script src="js/scenes/ch1.js"></script>

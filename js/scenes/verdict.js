@@ -1,18 +1,18 @@
-/* Verdict — receipt wall, the trap flip, then the match */
+/* Verdict — real receipts, a fair comparison, and the CPU/GPU/NPU explanation */
 (function () {
   'use strict';
   var GG = window.GG;
 
-  var DEFAULTS = [
-    { id: 'deadline', line: 'READ ON THIS LAPTOP · WI-FI OFF', claim: 'This is the NPU.' },
-    { id: 'photo', line: 'GENERATIVE FILL · ON-DEVICE', claim: 'Your photos never left this laptop.' },
-    { id: 'poster', line: 'WI-FI OFF · GENERATED ON-DEVICE', claim: 'The AI is inside the laptop.' }
+  var SLOTS = [
+    { id: 'deadline', fallback: 'LOCAL DOCUMENT SEARCH', claim: 'Run the deadline challenge to earn this receipt.' },
+    { id: 'photo', fallback: 'LOCAL PHOTO DECISION', claim: 'Run the photobomber challenge to earn this receipt.' },
+    { id: 'poster', fallback: 'LOCAL POSTER COMPOSER', claim: 'Run the 2AM poster challenge to earn this receipt.' }
   ];
 
   var ABILITIES = [
-    'Read a 40-page PDF in a blink',
-    'Delete a person from a photo',
-    'Make a poster with the Wi-Fi off'
+    { label: 'AI compute paths', entry: 'CPU/GPU · NPU varies', intel: 'CPU/GPU + NPU*' },
+    { label: 'NPU availability', entry: 'Check processor', intel: 'Verify exact model' },
+    { label: 'App + feature support', entry: 'Check exact app', intel: 'Check exact app' }
   ];
 
   function pcCard(kind) {
@@ -20,46 +20,42 @@
     var card = GG.el('div', { class: 'pc ' + kind });
     card.append(
       GG.el('div', { class: 'pc-top' },
-        GG.el('div', { class: 'pc-name', text: isIntel ? 'YOUR INTEL AI PC' : 'THE PRETTY ONE' }),
-        GG.el('div', { class: 'pc-tag', text: isIntel ? 'AI PC' : '₹ cheaper' })
+        GG.el('div', { class: 'pc-name', text: isIntel ? 'INTEL AI PC PROFILE' : 'ENTRY LAPTOP PROFILE' }),
+        GG.el('div', { class: 'pc-tag', text: isIntel ? 'SUGGESTED' : 'ILLUSTRATIVE' })
       ),
       GG.el('div', { class: 'pc-spec', text: isIntel
-        ? 'Core Ultra · 16GB+ · 1TB · NPU'
-        : '3 colours · RGB keys · 8GB · no NPU' })
+        ? 'Suggested profile: Core Ultra laptop · 16GB+ · 1TB · verify exact NPU model'
+        : 'Illustrative example: 8GB memory · integrated graphics; processor unspecified' })
     );
 
     var list = GG.el('ul', { class: 'abilities' });
-    ABILITIES.forEach(function (label, i) {
+    ABILITIES.forEach(function (ability, i) {
       list.append(GG.el('li', { class: 'ability' },
         GG.el('span', { class: 'ab-n', text: String(i + 1).padStart(2, '0') }),
-        GG.el('span', { class: 'ab-t', text: label }),
-        GG.el('span', { class: 'ab-s ab-no', text: '✕' }),
-        GG.el('span', { class: 'ab-s ab-yes', text: '✓' })
+        GG.el('span', { class: 'ab-t', text: ability.label }),
+        GG.el('span', { class: 'ab-s ab-lim', text: isIntel ? ability.intel : ability.entry })
       ));
     });
     card.append(list);
 
-    /* the core argument, drawn as a tiny pipeline */
     var flow = GG.el('div', { class: 'pc-flow' });
-    flow.append(GG.el('div', { class: 'pf-label', text: 'WHERE THE AI RUNS' }));
+    flow.append(GG.el('div', { class: 'pf-label', text: 'POSSIBLE COMPUTE PATH' }));
     var row = GG.el('div', { class: 'pf-row' });
     var steps = isIntel
-      ? [{ t: 'YOU', cls: '' }, { t: 'NPU', cls: 'npu' }, { t: 'ANSWER', cls: '' }]
-      : [{ t: 'YOU', cls: '' }, { t: 'UPLOAD', cls: 'cloud' }, { t: 'A SERVER', cls: 'cloud' }];
+      ? [{ t: 'APP', cls: '' }, { t: 'CPU/GPU/NPU*', cls: 'npu' }, { t: 'OUTPUT', cls: '' }]
+      : [{ t: 'APP', cls: '' }, { t: 'CPU/GPU · NPU varies', cls: '' }, { t: 'OUTPUT', cls: '' }];
     steps.forEach(function (s, i) {
       if (i) row.append(GG.el('span', { class: 'pf-arrow', text: '→', 'aria-hidden': 'true' }));
       row.append(GG.el('span', { class: 'pf-step ' + s.cls, text: s.t }));
     });
     flow.append(row,
-      GG.el('div', { class: 'pf-note', text: isIntel ? 'Runs here. No signal needed.' : 'Runs in the cloud. Needs Wi-Fi.' })
+      GG.el('div', { class: 'pf-note', text: '*Illustrative path only; the exact processor, app and feature determine where work runs.' })
     );
     card.append(flow);
 
-    if (!isIntel) card.append(GG.el('div', { class: 'pc-note', text: "Can't run on-device AI. That's the whole thing." }));
-
     card.append(GG.el('div', { class: 'pc-foot' },
-      GG.el('span', { class: 'pc-stamp', text: isIntel ? 'NPU INSIDE' : 'NO NPU' }),
-      GG.el('span', { class: 'pc-foot-note', text: isIntel ? 'runs on this laptop' : 'needs the cloud' })
+      GG.el('span', { class: 'pc-stamp', text: isIntel ? 'VERIFY EXACT MODEL' : 'COMPOSITE PROFILE' }),
+      GG.el('span', { class: 'pc-foot-note', text: isIntel ? '*verify NPU + app support' : 'exact processor unknown' })
     ));
 
     return card;
@@ -68,39 +64,52 @@
   GG.register('verdict', {
     mount: function (root) {
       var results = GG.state.results;
-      if (!results.length) {
-        DEFAULTS.forEach(function (r) { results.push(r); });
-      }
+      var skipped = GG.state.skipped;
       var phase = 'idle';
       var reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
       var screen = GG.el('section', { class: 'screen verdict' });
       screen.append(GG.el('header', { class: 'vd-head' },
         GG.el('div', { class: 'eyebrow', text: 'THE VERDICT' }),
-        GG.el('h2', { html: "THREE THINGS THE<br>PRETTY ONE CAN'T DO." })
+        GG.el('h2', { html: results.length
+          ? 'WHAT YOUR RECEIPTS <br>ACTUALLY PROVE.'
+          : 'NO RECEIPTS YET. <br>THAT IS OKAY.' })
       ));
 
       var strip = GG.el('div', { class: 'vd-strip' });
-      results.slice(0, 3).forEach(function (r, i) {
-        strip.append(GG.el('div', { class: 'vd-rec', style: 'animation-delay:' + (i * 110) + 'ms' },
-          GG.el('div', { class: 'vd-rec-line', text: r.line }),
-          GG.el('div', { class: 'vd-rec-claim', text: r.claim })
-        ));
+      SLOTS.forEach(function (slot, i) {
+        var result = results.filter(function (r) { return r.id === slot.id; })[0];
+        var wasSkipped = skipped.indexOf(slot.id) !== -1;
+        var rec = GG.el('div', {
+          class: 'vd-rec' + (result ? '' : ' missing'),
+          style: 'animation-delay:' + (i * 110) + 'ms'
+        },
+          GG.el('div', { class: 'vd-rec-line', text: result ? result.line : wasSkipped ? 'SKIPPED · NO RECEIPT' : 'NOT COMPLETED' }),
+          GG.el('div', { class: 'vd-rec-claim', text: result ? result.claim : wasSkipped ? 'Skipped challenges do not earn receipts.' : slot.claim })
+        );
+        strip.append(rec);
       });
       screen.append(strip);
 
       var pretty = pcCard('pretty');
       var intel = pcCard('intel');
       screen.append(GG.el('div', { class: 'showdown' }, pretty, GG.el('div', { class: 'vs', text: 'VS' }), intel));
+      screen.append(GG.el('p', { class: 'compare-note', text: 'Illustrative profiles, not a product or benchmark. AI can run on CPU/GPU too. AMD Ryzen AI and Qualcomm Snapdragon X PCs also offer NPUs. Compare equivalent devices, apps, battery, memory and price.' }));
+      screen.append(GG.el('div', { class: 'silicon', 'aria-label': 'CPU, GPU and NPU roles' },
+        GG.el('span', { class: 'si' }, GG.el('b', { text: 'CPU' }), ' apps, OS, system control'),
+        GG.el('span', { class: 'si' }, GG.el('b', { text: 'GPU' }), ' graphics + parallel compute'),
+        GG.el('span', { class: 'si' }, GG.el('b', { text: 'NPU' }), ' efficient supported AI'),
+        GG.el('span', { class: 'si-note', text: 'An NPU is not required for on-device AI. They can work together; CPU/GPU can also run AI, and the app decides the path.' })
+      ));
 
       var tally = GG.el('div', { class: 'vd-tally', role: 'status', 'aria-live': 'polite' },
         GG.el('span', { class: 'mstat' }, GG.el('b', { text: String(results.length) }), ' receipts'),
-        GG.el('span', { class: 'mstat' }, GG.el('b', { text: 'none' }), ' uploaded'),
-        GG.el('span', { class: 'mstat' }, GG.el('b', { text: 'Wi-Fi off' }), '')
+        GG.el('span', { class: 'mstat' }, GG.el('b', { text: String(skipped.length) }), ' skipped'),
+        GG.el('span', { class: 'mstat' }, GG.el('b', { text: 'No network calls' }), '')
       );
       screen.append(tally);
 
-      var cta = GG.el('button', { class: 'btn vd-cta', type: 'button', text: 'RUN THE AI STUFF' });
+      var cta = GG.el('button', { class: 'btn vd-cta', type: 'button', text: 'FIND YOUR AI PC' });
       screen.append(cta);
 
       cta.addEventListener('click', function () {
@@ -134,7 +143,7 @@
             GG.timers.after(intelEnd, function () {
               tally.classList.add('show');
               cta.disabled = false;
-              cta.textContent = 'SEE YOUR MATCH';
+              cta.textContent = 'BUILD MY MATCH';
               phase = 'done';
             });
           });

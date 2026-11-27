@@ -41,7 +41,7 @@
           GG.el('div', { class: 'eyebrow', text: 'INTEL AI PC · IN-STORE DEMO' }),
           GG.el('h1', { class: 'attract-h1', html: 'WOULD YOUR<br>LAPTOP SURVIVE<br>YOUR LIFE?' }),
           play,
-          GG.el('p', { class: 'attract-sub', text: '90 seconds · no typing · go' })
+          GG.el('p', { class: 'attract-sub', text: '2–3 minutes · no typing · go' })
         )
       );
 

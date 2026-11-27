@@ -17,6 +17,24 @@
   window.addEventListener('pointerdown', unlock, { passive: true });
   window.addEventListener('keydown', unlock);
 
+  /* restart / home control */
+  var homeBtn = document.getElementById('home');
+  function paintHome(scene) {
+    if (!homeBtn) return;
+    homeBtn.hidden = scene === 'attract';
+  }
+  if (homeBtn) {
+    homeBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      GG.reset();
+      GG.nav('attract', { action: 'restart' });
+    });
+  }
+  document.addEventListener('gg:scene', function (e) {
+    paintHome(e.detail && e.detail.scene);
+  });
+  paintHome(document.documentElement.dataset.scene || 'attract');
+
   /* mute toggle */
   var muteBtn = document.getElementById('mute');
   function paintMute() {
@@ -32,18 +50,27 @@
   });
   paintMute();
 
-  /* idle: only attract + match */
-  var IDLE_MS = 25000;
+  /* idle: return every scene to attract for the next shopper */
+  var IDLE_BY_SCENE = {
+    attract: 25000,
+    intro: 60000,
+    ch1: 90000,
+    ch2: 90000,
+    ch3: 90000,
+    verdict: 60000,
+    match: 45000
+  };
+  GG.idleLimits = IDLE_BY_SCENE;
   var lastInput = Date.now();
   ['pointerdown', 'keydown', 'touchstart', 'wheel'].forEach(function (ev) {
     window.addEventListener(ev, function () { lastInput = Date.now(); }, { passive: true });
   });
   setInterval(function () {
-    if (GG.current !== 'attract' && GG.current !== 'match') return;
-    var limit = GG.current === 'match' ? 45000 : IDLE_MS;
+    if (!GG.current || GG.current === 'attract') return;
+    var limit = IDLE_BY_SCENE[GG.current];
+    if (limit == null) limit = 90000;
     if (Date.now() - lastInput < limit) return;
     lastInput = Date.now();
-    if (GG.current === 'attract') return;
     GG.reset();
     GG.nav('attract', { action: 'idle' });
   }, 1000);

@@ -87,7 +87,7 @@ h1 { font-size: 92px; line-height: 0.92; letter-spacing: -0.045em; font-weight: 
 h2 { font-size: 54px; line-height: 0.98; letter-spacing: -0.035em; font-weight: 850; }
 h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 800; }
 .eyebrow {
-  font: 800 13px/1 var(--mono);
+  font: 800 14px/1 var(--mono);
   letter-spacing: 0.22em;
   text-transform: uppercase;
   color: var(--dim);
@@ -121,6 +121,11 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 
 .btn.ghost {
   background: transparent;
+  color: #fff;
+  border: 2px solid var(--line);
+}
+.btn.secondary {
+  background: rgba(255,255,255,.06);
   color: #fff;
   border: 2px solid var(--line);
 }
@@ -164,7 +169,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   background: rgba(8, 9, 12, 0.55);
   backdrop-filter: blur(8px);
   color: var(--dim);
-  font: 700 11px/1 var(--mono);
+  font: 700 14px/1 var(--mono);
   letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
@@ -183,6 +188,32 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 }
 
 /* ---------- HUD ---------- */
+.home {
+  position: absolute;
+  left: 22px;
+  bottom: 18px;
+  z-index: 60;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 64px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 9, 12, 0.6);
+  backdrop-filter: blur(8px);
+  color: var(--dim);
+  font: 700 13px/1 var(--mono);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.65;
+}
+.home[hidden] { display: none; }
+.home:hover { opacity: 1; color: var(--paper); }
+.home:focus-visible { outline: 3px solid var(--blue-hi); outline-offset: 3px; }
+.home-icon { font-size: 18px; line-height: 1; }
+
 .mute {
   position: absolute;
   right: 22px;
@@ -199,7 +230,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   background: rgba(8, 9, 12, 0.6);
   backdrop-filter: blur(8px);
   color: var(--dim);
-  font: 700 12px/1 var(--mono);
+  font: 700 14px/1 var(--mono);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -216,19 +247,26 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 
 #legal {
   position: absolute;
-  left: 22px;
+  left: 176px;
   bottom: 20px;
   z-index: 60;
-  font: 600 11px/1 var(--mono);
-  letter-spacing: 0.08em;
+  font: 600 14px/1 var(--mono);
+  letter-spacing: 0.06em;
   color: var(--dim-2);
   text-transform: uppercase;
   pointer-events: none;
 }
 
+@media (max-width: 1100px) {
+  #legal, .skip, .mute, .home { font-size: 16px; }
+  .eyebrow { font-size: 16px; }
+  #legal { left: 190px; }
+}
+
 /* ---------- receipt ---------- */
 .receipt-scene {
   position: absolute;
+  z-index: 80;
   inset: 0;
   display: flex;
   align-items: center;
@@ -238,6 +276,8 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 }
 .receipt-card {
   width: 760px;
+  max-height: calc(100% - 8px);
+  overflow-y: auto;
   background: var(--paper);
   color: #12141a;
   border-radius: 20px;
@@ -248,6 +288,22 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   animation: receipt-in 420ms cubic-bezier(.2,.9,.25,1) forwards;
   position: relative;
 }
+.receipt-card.value {
+  width: 940px;
+  padding: 34px 42px 36px;
+}
+.receipt-card.value .receipt-stamp { margin-bottom: 16px; padding-bottom: 10px; }
+.receipt-card.value .receipt-lines {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 22px;
+  margin-bottom: 18px;
+}
+.receipt-card.value .receipt-line { font-size: 15px; line-height: 1.4; gap: 8px; }
+.receipt-card.value .receipt-line .tick { font-size: 13px; }
+.receipt-card.value .receipt-headline { font-size: 38px; margin-bottom: 8px; }
+.receipt-card.value .receipt-body { font-size: 17px; max-width: 800px; }
+.receipt-card.value .receipt-actions { margin-top: 22px; }
 .receipt-card::after {
   content: "";
   position: absolute;
@@ -259,7 +315,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
 @keyframes receipt-in { to { transform: translateY(0) rotate(-0.4deg); opacity: 1; } }
 
 .receipt-stamp {
-  font: 800 12px/1 var(--mono);
+  font: 800 13px/1 var(--mono);
   letter-spacing: 0.3em;
   color: #6b7078;
   border-bottom: 2px dashed #c9c4b8;
@@ -271,7 +327,7 @@ h3 { font-size: 26px; line-height: 1.1; letter-spacing: -0.02em; font-weight: 80
   display: flex;
   align-items: flex-start;
   gap: 12px;
-  font: 700 17px/1.35 var(--mono);
+  font: 700 18px/1.45 var(--mono);
   letter-spacing: -0.01em;
   color: #2a2d35;
 }

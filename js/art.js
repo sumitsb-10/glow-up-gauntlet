@@ -60,77 +60,18 @@
       '</svg>';
   };
 
-  /* group photo for challenge 2 — flat vector, no real likeness */
+  /* Real, locally bundled group photo for challenge 2. The edit layer is illustrative. */
   GG.art.groupPhoto = function () {
-    function head(p) {
-      return '<g transform="translate(' + p.x + ',' + p.y + ') scale(' + p.s + ')">' +
-        '<circle r="46" fill="' + p.skin + '"/>' +
-        '<path d="M-46 0c0-27 20-47 46-47s46 20 46 47c-6-14-22-22-46-22s-40 8-46 22z" fill="' + p.hair + '"/>' +
-        '<circle cx="-16" cy="6" r="3.6" fill="#14171d"/>' +
-        '<circle cx="16" cy="6" r="3.6" fill="#14171d"/>' +
-        '<path d="M-8 22q8 7 16 0" stroke="#14171d" stroke-width="3" fill="none" stroke-linecap="round"/>' +
-        '</g>';
-    }
-    function body(p) {
-      var w = 70 * p.s, top = p.y + 44 * p.s;
-      return '<path d="M' + (p.x - w) + ' 520 C' + (p.x - w) + ' ' + (top + 52) + ' ' +
-        (p.x - w * 0.55) + ' ' + (top + 10) + ' ' + p.x + ' ' + (top + 10) +
-        ' C' + (p.x + w * 0.55) + ' ' + (top + 10) + ' ' + (p.x + w) + ' ' + (top + 52) + ' ' +
-        (p.x + w) + ' 520 Z" fill="' + p.shirt + '"/>';
-    }
-
-    var friends = [
-      { x: 108, y: 262, s: 1.00, skin: '#E7B48C', hair: '#2A1D18', shirt: '#2E6B8A' },
-      { x: 240, y: 248, s: 0.96, skin: '#C98A63', hair: '#1A1410', shirt: '#8A4A5E' },
-      { x: 488, y: 252, s: 0.99, skin: '#F0C7A6', hair: '#3A2A1E', shirt: '#3F7A55' },
-      { x: 620, y: 264, s: 1.02, skin: '#D9A077', hair: '#221A16', shirt: '#4B4E8A' }
-    ];
-
-    var bomber = { x: 362, y: 196, s: 1.14, skin: '#E7B48C', hair: '#2A1D18', shirt: '#FF7A59' };
-
-    var friendSvg = friends.map(function (p) { return body(p) + head(p); }).join('');
-
-    var bomberSvg =
-      '<g class="bomber">' +
-        '<rect class="bomber-hit" x="' + (bomber.x - 80) + '" y="' + (bomber.y - 110) + '" width="160" height="330" fill="#fff" opacity="0" pointer-events="all" tabindex="0" role="button" aria-label="Select the photobomber"/>' +
-        body(bomber) +
-        head(bomber) +
-        '<g transform="translate(' + bomber.x + ',' + bomber.y + ') scale(' + bomber.s + ')">' +
-          '<path d="M0 -104 L32 -32 L-32 -32 Z" fill="#FFD166"/>' +
-          '<path d="M0 -104 L12 -74 L-12 -74 Z" fill="#FF7A59"/>' +
-          '<circle cy="-108" r="8" fill="#FF7A59"/>' +
-          '<path d="M-30 26q30 30 60 0" stroke="#14171d" stroke-width="4" fill="none" stroke-linecap="round"/>' +
-          '<circle cx="-18" cy="-2" r="2.4" fill="#14171d"/><circle cx="18" cy="-2" r="2.4" fill="#14171d"/>' +
-          '<path d="M-24 -14l10 5M24 -14l-10 5" stroke="#14171d" stroke-width="3" stroke-linecap="round"/>' +
-        '</g>' +
-        '<rect class="sel" x="' + (bomber.x - 86) + '" y="' + (bomber.y - 116) + '" width="172" height="336" rx="12" fill="none" stroke="#D6FF3F" stroke-width="3" stroke-dasharray="10 8"/>' +
-      '</g>';
-
-    return '<svg viewBox="0 0 900 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Group photo with an uninvited photobomber">' +
-      '<defs>' +
-        '<linearGradient id="wall" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0" stop-color="#243248"/><stop offset="1" stop-color="#3d4b63"/>' +
-        '</linearGradient>' +
-        '<linearGradient id="floor" x1="0" y1="0" x2="0" y2="1">' +
-          '<stop offset="0" stop-color="#1a2130"/><stop offset="1" stop-color="#111722"/>' +
-        '</linearGradient>' +
-      '</defs>' +
-      '<rect width="900" height="520" fill="url(#wall)"/>' +
-      '<circle cx="620" cy="104" r="92" fill="#ffe6a8" opacity=".14"/>' +
-      '<circle cx="620" cy="104" r="52" fill="#ffe6a8" opacity=".22"/>' +
-      /* extension content, hidden until the frame is dragged */
-      '<g class="ext">' +
-        '<rect x="726" y="96" width="150" height="216" rx="10" fill="#0e1520" stroke="#8fa3bf" stroke-width="6"/>' +
-        '<path d="M726 206h150M801 96v216" stroke="#8fa3bf" stroke-width="6"/>' +
-        '<path d="M742 520c0-58 14-96 34-118 6 44 4 82-2 118z" fill="#4f9a6e"/>' +
-        '<path d="M796 520c2-52 14-84 34-104 2 40-2 76-10 104z" fill="#62b585"/>' +
-        '<rect x="754" y="404" width="56" height="54" rx="8" fill="#b06a4a"/>' +
-      '</g>' +
-      '<rect y="404" width="900" height="116" fill="url(#floor)"/>' +
-      bomberSvg +
-      friendSvg +
-      '<rect width="900" height="520" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="2"/>' +
-      '</svg>';
+    return '<div class="group-photo-scene">' +
+      '<img class="group-base" src="assets/photo-editor-friends.jpg" alt="Five friends posing together on a beach" />' +
+      '<img class="group-edited" src="assets/photo-editor-friends-clean-v2.jpg" alt="" aria-hidden="true" />' +
+      '<div class="bomber">' +
+        '<button class="bomber-hit" type="button" tabindex="0" role="button" aria-label="Select the person to mask in the group photo"></button>' +
+        '<svg class="sel" viewBox="0 0 150 340" aria-hidden="true"><rect x="3" y="3" width="144" height="334" rx="12" fill="none" stroke="#D6FF3F" stroke-width="4" stroke-dasharray="10 8" /></svg>' +
+      '</div>' +
+      '<span class="photo-mask-label" aria-hidden="true">ILLUSTRATIVE MASK</span>' +
+      '<span class="photo-keep-label" aria-hidden="true">ORIGINAL KEPT</span>' +
+    '</div>';
   };
 
   /* small utility icon set */

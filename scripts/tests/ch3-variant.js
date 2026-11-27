@@ -7,5 +7,7 @@ await wait(250);
 chip('SERIF').click();
 await wait(250);
 chip('GRAINY').click();
+await wait(200);
+chip('LOW POWER').click();
 await wait(600);
-return { ok: true };
+return { ok: true, output: q('.poster').getAttribute('data-output') };
